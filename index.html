@@ -1769,19 +1769,9 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
        HOME SCREEN (Level 1)
        =========================== -->
   <div class="screen active" id="homeScreen">
-    <!-- Language selector -->
-    <div class="lang-selector">
-      <button class="lang-btn active" onclick="setLang('fr')" id="langFr">🇫🇷</button>
-      <button class="lang-btn" onclick="setLang('jp')" id="langJp">🇯🇵</button>
-    </div>
-
-    <!-- Profile bar with avatar -->
-    <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 8px;">
-      <div id="profileBar" onclick="openProfileModal()" style="flex: 1;"></div>
-      <div class="avatar-area" onclick="openAvatarModal()">
-        <div class="avatar-character" id="avatarDisplay">👧</div>
-      </div>
-    </div>
+    <!-- Profile bar (hidden) -->
+    <div id="profileBar" style="display:none;"></div>
+    <div id="avatarDisplay" style="display:none;">👧</div>
 
     <div class="logo"><span class="bee">🪶</span> La Plume d'Emma</div>
     <p class="subtitle" id="homeSubtitle">Choisis une matière !</p>
@@ -4189,12 +4179,18 @@ function importThemes(event) {
 var DEFAULT_POEMS = [
   {
     title: 'Le polar du potager',
-    author: 'Anne-Lise Font',
-    text: "Drame dans le potager :\nLe jardinier s'est fait voler.\nOn lui a tout pris,\nIl n'a plus un radis.\nL'inspecteur La Binette\nVient mener l'enquête :\nIl interroge la courgette,\nElle n'est pas dans son assiette.\nLe navet n'est pas là,\nToujours au cinéma, celui-là !\n-Nom d'un gratin, mais quel mystère !\nS'exclame la pomme de terre.\n-Je veux voir un avocat !\nHurle le rutabaga.\nDans le potager, c'est la foire d'empoigne\nQuand tout à coup, en plein macédoine,\nLe radis perdu refait son apparition.\nIl était parti aux champignons"
+    author: 'Anne-Lise Fontan',
+    text: "Drame dans le potager :\nLe jardinier s'est fait voler.\nOn lui a tout pris,\nIl n'a plus un radis.\nL'inspecteur La Binette\nVient mener l'enquête :\nIl interroge la courgette,\nElle n'est pas dans son assiette.\nLe navet n'est pas là,\nToujours au cinéma, celui-là !\n- Nom d'un gratin, mais quel mystère !\nS'exclame la pomme de terre.\n- Je veux voir un avocat !\nHurle le rutabaga.\nDans le potager, c'est la foire d'empoigne\nQuand tout à coup, en pleine macédoine,\nLe radis perdu refait son apparition.\nIl était parti aux champignons."
   }
 ];
 
+var POEM_VERSION = 2;
 function getPoems() {
+  var storedVer = parseInt(localStorage.getItem('poemVersion') || '0', 10);
+  if (storedVer < POEM_VERSION) {
+    localStorage.removeItem('poems');
+    localStorage.setItem('poemVersion', String(POEM_VERSION));
+  }
   var data = localStorage.getItem('poems');
   var poems = data ? JSON.parse(data) : [];
   if (poems.length === 0) {
