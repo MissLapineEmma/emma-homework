@@ -11220,7 +11220,7 @@ function poemLectureInit() {
     if (line.trim() === '') {
       html += '<div style="height:10px;"></div>';
     } else {
-      html += '<div class="poem-lecture-line" id="poemLectureLine' + i + '" style="padding:3px 8px;border-radius:8px;transition:background 0.3s;">' + line + '</div>';
+      html += '<div class="poem-lecture-line" id="poemLectureLine' + i + '" onclick="poemLecturePlayFrom(' + i + ')" style="padding:3px 8px;border-radius:8px;transition:background 0.3s;cursor:pointer;">' + line + '</div>';
     }
   });
   html += '</div>';
@@ -11285,6 +11285,45 @@ function poemLecturePlay() {
   var lineIdx = 0;
   function speakNext() {
     // Skip empty lines
+    while (lineIdx < lines.length && lines[lineIdx].trim() === '') { lineIdx++; }
+    if (lineIdx >= lines.length || (!_poemLectureSpeaking && !_poemLecturePaused)) {
+      poemLectureStop();
+      return;
+    }
+    _poemLectureCurrentVerse = lineIdx;
+    poemLectureHighlight(lineIdx);
+
+    var utterance = new SpeechSynthesisUtterance(lines[lineIdx]);
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.85;
+    if (typeof bestFrenchVoice !== 'undefined' && bestFrenchVoice) {
+      utterance.voice = bestFrenchVoice;
+    }
+    utterance.onend = function() {
+      lineIdx++;
+      speakNext();
+    };
+    utterance.onerror = function(e) {
+      if (e.error !== 'interrupted') { lineIdx++; speakNext(); }
+    };
+    window.speechSynthesis.speak(utterance);
+  }
+  speakNext();
+}
+
+function poemLecturePlayFrom(startIdx) {
+  var lines = _poemLectureUtterances;
+  if (!lines || lines.length === 0) return;
+  window.speechSynthesis.cancel();
+  _poemLectureSpeaking = true;
+  _poemLecturePaused = false;
+  var btn = document.getElementById('poemLecturePlayBtn');
+  if (btn) btn.innerHTML = '⏸️ Pause';
+
+  poemLectureClearHighlights();
+
+  var lineIdx = startIdx;
+  function speakNext() {
     while (lineIdx < lines.length && lines[lineIdx].trim() === '') { lineIdx++; }
     if (lineIdx >= lines.length || (!_poemLectureSpeaking && !_poemLecturePaused)) {
       poemLectureStop();
@@ -14752,6 +14791,16 @@ function showLectureSelection() {
 }
 
 function showPoemSelection() {
+  var poems = getPoems();
+  if (poems.length === 0) {
+    alert('Aucun poème. Ajoute-en un d\'abord dans Gérer mes poèmes !');
+    return;
+  }
+  if (poems.length === 1) {
+    // Only one poem — go directly to mini-games hub
+    startPoemGameWithIdx(0);
+    return;
+  }
   showScreen('poemSelectionScreen');
 }
 
