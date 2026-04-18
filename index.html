@@ -11353,6 +11353,7 @@ var _poemLectureUtterances = [];
 var _poemLectureCurrentVerse = -1;
 
 var _poemLectureTitle = '';
+var _poemLectureVerseOffset = 0;
 
 function poemLectureInit() {
   var poems = getPoems();
@@ -11363,6 +11364,21 @@ function poemLectureInit() {
   _poemLectureSpeaking = false;
   _poemLectureCurrentVerse = -1;
   _poemLectureTitle = poem.title;
+
+  // Calculate verse offset for scene mapping when a section subset is selected
+  _poemLectureVerseOffset = 0;
+  if (selectedPoemSections.length > 0) {
+    var strophes = splitPoemIntoStrophes(poem.text);
+    var sortedSections = selectedPoemSections.slice().sort(function(a,b){return a-b;});
+    var firstSection = sortedSections[0];
+    // Count non-empty lines in all strophes before the first selected section
+    for (var s = 0; s < firstSection && s < strophes.length; s++) {
+      var sLines = strophes[s].split('\n');
+      for (var l = 0; l < sLines.length; l++) {
+        if (sLines[l].trim() !== '') _poemLectureVerseOffset++;
+      }
+    }
+  }
 
   // Build display — two columns: vignette left, text right
   var html = '<div style="text-align:center;margin-bottom:10px;">';
@@ -11552,14 +11568,16 @@ function poemLectureHighlight(idx) {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Update vignette — find the verse index (skip empty lines)
+  // Update vignette — find the verse index (skip empty lines) + section offset
   var vignetteEl = document.getElementById('poemLectureVignette');
   if (vignetteEl && _poemLectureTitle) {
-    // Count which non-empty line this is (verse index for the mapping)
-    var verseIdx = 0;
+    // Count which non-empty line this is within the displayed text
+    var localVerseIdx = 0;
     for (var i = 0; i < idx; i++) {
-      if (_poemLectureUtterances[i] && _poemLectureUtterances[i].trim() !== '') verseIdx++;
+      if (_poemLectureUtterances[i] && _poemLectureUtterances[i].trim() !== '') localVerseIdx++;
     }
+    // Add offset for sections before the selected one
+    var verseIdx = localVerseIdx + _poemLectureVerseOffset;
     var mapping = POEM_VERSE_TO_SCENE[_poemLectureTitle];
     if (mapping && mapping[verseIdx] !== undefined) {
       var sceneIdx = mapping[verseIdx];
@@ -14521,9 +14539,31 @@ function endKanjiGame() {
 }
 
 /* ===========================
-   KANJI QUIZ MINI-GAME (multiple choice)
+   KANJI QUIZ MINI-GAME (multiple choice, 10 per round, mastery tracking)
    =========================== */
 var _kqState = null;
+
+// Mastery: stored in localStorage as { "kanji_mastery_1": { "一": 5, "二": 3, ... } }
+function getKanjiMastery(gradeIdx) {
+  var data = localStorage.getItem('kanji_mastery_' + gradeIdx);
+  return data ? JSON.parse(data) : {};
+}
+function saveKanjiMastery(gradeIdx, mastery) {
+  localStorage.setItem('kanji_mastery_' + gradeIdx, JSON.stringify(mastery));
+}
+
+function speakJapanese(text) {
+  var utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ja-JP';
+  utterance.rate = 0.75;
+  var voices = window.speechSynthesis.getVoices();
+  var jaVoice = null;
+  for (var i = 0; i < voices.length; i++) {
+    if (voices[i].lang && voices[i].lang.startsWith('ja')) { jaVoice = voices[i]; break; }
+  }
+  if (jaVoice) utterance.voice = jaVoice;
+  window.speechSynthesis.speak(utterance);
+}
 
 function startKanjiQuizSelection() {
   showScreen('kanjiQuizSelectionScreen');
@@ -14533,18 +14573,29 @@ function startKanjiQuizSelection() {
 function renderKanjiQuizSelection() {
   var container = document.getElementById('kanjiQuizSetSelection');
   var sets = [
-    { name: '一年生 (Ichi nensei)', emoji: '🌸', list: kanjiGrade1, desc: 'CP — ' + kanjiGrade1.length + ' kanji' },
-    { name: '二年生 (Ni nensei)', emoji: '🎋', list: kanjiGrade2, desc: 'CE1 — ' + kanjiGrade2.length + ' kanji' },
-    { name: '三年生 (San nensei)', emoji: '🏯', list: kanjiGrade3, desc: 'CE2 — ' + kanjiGrade3.length + ' kanji' }
+    { name: '一年生 (Ichi nensei)', emoji: '🌸', list: kanjiGrade1, desc: 'CP', idx: 0 },
+    { name: '二年生 (Ni nensei)', emoji: '🎋', list: kanjiGrade2, desc: 'CE1', idx: 1 },
+    { name: '三年生 (San nensei)', emoji: '🏯', list: kanjiGrade3, desc: 'CE2', idx: 2 }
   ];
   var html = '<div style="display:grid;grid-template-columns:1fr;gap:12px;">';
-  sets.forEach(function(set, idx) {
-    var selected = _kqState && _kqState.setIdx === idx;
-    html += '<div class="game-card" onclick="selectKanjiQuizSet(' + idx + ')" style="text-align:left;display:flex;align-items:center;gap:14px;padding:16px 18px;' + (selected ? 'border:2.5px solid var(--purple);background:#f8f4ff;' : '') + '">';
+  sets.forEach(function(set) {
+    var selected = _kqState && _kqState.setIdx === set.idx;
+    var mastery = getKanjiMastery(set.idx);
+    var learned = 0;
+    for (var k in mastery) { if (mastery[k] >= 5) learned++; }
+    var total = set.list.length;
+    var pct = total > 0 ? Math.round(learned / total * 100) : 0;
+
+    html += '<div class="game-card" onclick="selectKanjiQuizSet(' + set.idx + ')" style="text-align:left;display:flex;align-items:center;gap:14px;padding:16px 18px;' + (selected ? 'border:2.5px solid var(--purple);background:#f8f4ff;' : '') + '">';
     html += '<div style="font-size:2.2rem;flex-shrink:0;">' + set.emoji + '</div>';
-    html += '<div>';
+    html += '<div style="flex:1;">';
     html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.05rem;color:var(--dark);">' + set.name + '</div>';
-    html += '<div style="font-size:0.8rem;color:#999;margin-top:2px;">' + set.desc + '</div>';
+    html += '<div style="font-size:0.78rem;color:#999;margin-top:2px;">' + set.desc + ' — ' + total + ' kanji</div>';
+    // Progress bar
+    html += '<div style="margin-top:6px;background:#eee;border-radius:4px;height:5px;overflow:hidden;">';
+    html += '<div style="height:100%;width:' + pct + '%;background:var(--green);border-radius:4px;transition:width 0.3s;"></div>';
+    html += '</div>';
+    html += '<div style="font-size:0.7rem;color:var(--green);margin-top:2px;font-weight:700;">' + learned + '/' + total + ' appris</div>';
     html += '</div>';
     html += '</div>';
   });
@@ -14562,14 +14613,36 @@ function startKanjiQuizGame() {
   if (!_kqState || !_kqState.list) {
     _kqState = { setIdx: 0, list: kanjiGrade1 };
   }
+  var gradeIdx = _kqState.setIdx;
   var list = _kqState.list;
-  var shuffled = list.slice().sort(function() { return Math.random() - 0.5; });
-  _kqState.kanji = shuffled;
+  var mastery = getKanjiMastery(gradeIdx);
+
+  // Prioritize unlearned kanji (mastery < 5), then pick 10
+  var unlearned = [];
+  var learned = [];
+  for (var i = 0; i < list.length; i++) {
+    var count = mastery[list[i].character] || 0;
+    if (count < 5) { unlearned.push(list[i]); } else { learned.push(list[i]); }
+  }
+  unlearned.sort(function() { return Math.random() - 0.5; });
+  learned.sort(function() { return Math.random() - 0.5; });
+
+  // Take up to 10: prioritize unlearned, fill with learned for revision
+  var batch = unlearned.slice(0, 10);
+  if (batch.length < 10) {
+    batch = batch.concat(learned.slice(0, 10 - batch.length));
+  }
+  batch.sort(function() { return Math.random() - 0.5; });
+
+  _kqState.kanji = batch;
   _kqState.current = 0;
   _kqState.score = 0;
   _kqState.correct = 0;
-  _kqState.total = shuffled.length;
+  _kqState.total = batch.length;
   _kqState.answered = false;
+  _kqState.mastery = mastery;
+  _kqState.gradeIdx = gradeIdx;
+  _kqState.newlyLearned = [];
 
   showScreen('kanjiQuizScreen');
   loadKanjiQuizRound();
@@ -14592,22 +14665,19 @@ function loadKanjiQuizRound() {
   document.getElementById('kqFeedback').textContent = '';
   document.getElementById('kqFeedback').className = 'feedback';
 
+  // Speak the kanji reading
+  speakJapanese(kanji.readings[0]);
+
   // Build 3 choices: 1 correct + 2 distractors
   var correctReading = kanji.readings[0];
-  var distractors = [];
-  var allKanji = st.list;
-  // Gather other readings as distractors
   var otherReadings = [];
-  for (var i = 0; i < allKanji.length; i++) {
-    if (allKanji[i].character !== kanji.character) {
-      otherReadings.push(allKanji[i].readings[0]);
+  for (var i = 0; i < st.list.length; i++) {
+    if (st.list[i].character !== kanji.character && st.list[i].readings[0] !== correctReading) {
+      otherReadings.push(st.list[i].readings[0]);
     }
   }
-  // Shuffle and pick 2
   otherReadings.sort(function() { return Math.random() - 0.5; });
-  for (var i = 0; i < Math.min(2, otherReadings.length); i++) {
-    distractors.push(otherReadings[i]);
-  }
+  var distractors = otherReadings.slice(0, 2);
 
   var choices = [correctReading].concat(distractors);
   choices.sort(function() { return Math.random() - 0.5; });
@@ -14656,32 +14726,65 @@ function kanjiQuizAnswer(btn, chosen) {
     }
   });
 
+  // Update mastery
+  var ch = kanji.character;
   if (correct) {
-    document.getElementById('kqFeedback').textContent = '✓ Correct !';
-    document.getElementById('kqFeedback').className = 'feedback correct-fb';
+    st.mastery[ch] = (st.mastery[ch] || 0) + 1;
     st.score += 10;
     st.correct++;
     gamiCorrectAnswer();
     document.getElementById('kqScore').textContent = st.score;
+
+    // Speak correct reading as confirmation
+    speakJapanese(kanji.readings[0]);
+
+    var masteryCount = st.mastery[ch];
+    if (masteryCount === 5) {
+      st.newlyLearned.push(kanji);
+      document.getElementById('kqFeedback').innerHTML = '✓ Correct ! <span style="color:var(--green);font-weight:800;">🎉 Kanji appris !</span>';
+    } else {
+      document.getElementById('kqFeedback').textContent = '✓ Correct ! (' + masteryCount + '/5)';
+    }
+    document.getElementById('kqFeedback').className = 'feedback correct-fb';
   } else {
+    // Reset mastery on wrong answer
+    st.mastery[ch] = Math.max(0, (st.mastery[ch] || 0) - 1);
     document.getElementById('kqFeedback').innerHTML = '✗ C\'est : <strong>' + kanji.readings[0] + '</strong>';
     document.getElementById('kqFeedback').className = 'feedback wrong-fb';
     gamiWrongAnswer();
+
+    // Speak the correct reading so the child hears it
+    setTimeout(function() { speakJapanese(kanji.readings[0]); }, 400);
   }
+
+  // Save mastery after each answer
+  saveKanjiMastery(st.gradeIdx, st.mastery);
 
   setTimeout(function() {
     st.current++;
     loadKanjiQuizRound();
-  }, correct ? 800 : 1500);
+  }, correct ? 1000 : 1800);
 }
 
 function kanjiQuizEnd() {
   var st = _kqState;
   var accuracy = Math.round((st.correct / st.total) * 100);
   var stars = accuracy >= 80 ? 3 : accuracy >= 60 ? 2 : 1;
+
+  // Count total learned for this grade
+  var totalLearned = 0;
+  for (var k in st.mastery) { if (st.mastery[k] >= 5) totalLearned++; }
+
   addGameSession('KanjiQuiz', st.score, 0);
   setGameRecord('KanjiQuiz_score', st.score);
-  showEndScreen(st.score, stars, accuracy + '% correct — ' + (accuracy >= 80 ? 'すごい！' : accuracy >= 60 ? 'がんばった！' : 'もっとがんばろう！'));
+
+  var msg = accuracy + '% correct !';
+  if (st.newlyLearned.length > 0) {
+    msg += ' ' + st.newlyLearned.length + ' nouveau(x) kanji appris !';
+  }
+  msg += ' (' + totalLearned + '/' + st.list.length + ' maîtrisés)';
+
+  showEndScreen(st.score, stars, msg);
 }
 
 function kanjiQuizStop() {
