@@ -3409,51 +3409,66 @@ let isSpeaking = false;
 // Available voices
 let voices = [];
 
-// Load voices when ready
+// Load voices when ready — Safari/iPad may not fire onvoiceschanged reliably
 window.speechSynthesis.onvoiceschanged = loadVoices;
 
 let bestFrenchVoice = null;
 
-function loadVoices() {
-  voices = synth.getVoices();
-  // Pick the best French voice: prefer warm/natural voices
-  // Priority: Google > Microsoft > Apple > other
-  const frVoices = voices.filter(v => v.lang.startsWith('fr'));
-  if (frVoices.length === 0) return;
+function scoreFrenchVoices(voiceList) {
+  var frVoices = voiceList.filter(function(v) { return v.lang && v.lang.startsWith('fr'); });
+  if (frVoices.length === 0) return null;
 
-  // Score each voice: higher = better
-  const scored = frVoices.map(function(v) {
-    const name = v.name.toLowerCase();
-    let score = 0;
-    // Google voices are quite natural
+  var scored = frVoices.map(function(v) {
+    var name = v.name.toLowerCase();
+    var score = 0;
     if (name.indexOf('google') !== -1) score += 30;
-    // Microsoft Online / Neural voices are warm
     if (name.indexOf('online') !== -1 || name.indexOf('neural') !== -1) score += 25;
     if (name.indexOf('microsoft') !== -1) score += 15;
-    // Female voices (warmer for a kids' app) — known French female voice names
     var femaleNames = ['denise','hortense','caroline','sylvie','eloise','amelie','audrey',
-      'aurelie','marie','thomas','siri female','léa','céline','virginie','sandrine'];
+      'aurelie','marie','siri female','léa','céline','virginie','sandrine'];
     var isFemale = false;
     for (var f = 0; f < femaleNames.length; f++) {
       if (name.indexOf(femaleNames[f]) !== -1) { isFemale = true; break; }
     }
     if (isFemale) score += 20;
-    // Penalize known male voices
     var maleNames = ['thomas','jacques','nicolas','luc','mathieu'];
     for (var m = 0; m < maleNames.length; m++) {
       if (name.indexOf(maleNames[m]) !== -1) { score -= 10; break; }
     }
-    // Apple/iOS enhanced voices
     if (name.indexOf('enhanced') !== -1 || name.indexOf('premium') !== -1) score += 15;
-    // Prefer fr-FR over fr-CA
     if (v.lang === 'fr-FR') score += 5;
-    // Network/remote voices are generally better quality
     if (!v.localService) score += 8;
     return { voice: v, score: score };
   });
   scored.sort(function(a, b) { return b.score - a.score; });
-  bestFrenchVoice = scored[0].voice;
-  console.log('Selected voice:', bestFrenchVoice.name, '(' + bestFrenchVoice.lang + ')');
+  return scored[0].voice;
+}
+
+function loadVoices() {
+  voices = synth.getVoices();
+  var best = scoreFrenchVoices(voices);
+  if (best) {
+    bestFrenchVoice = best;
+    console.log('Selected voice:', bestFrenchVoice.name, '(' + bestFrenchVoice.lang + ')');
+  }
+}
+
+// Eager load attempt (Safari sometimes has voices ready immediately)
+try { loadVoices(); } catch(e) {}
+// Retry after a short delay (covers iPad/Safari late loading)
+setTimeout(loadVoices, 500);
+setTimeout(loadVoices, 2000);
+
+// Ensure French voice is set right before speaking — last resort fallback
+function ensureFrenchVoice() {
+  if (bestFrenchVoice) return bestFrenchVoice;
+  // Try loading voices one more time
+  var allVoices = window.speechSynthesis.getVoices();
+  if (allVoices.length > 0) {
+    var best = scoreFrenchVoices(allVoices);
+    if (best) { bestFrenchVoice = best; return best; }
+  }
+  return null;
 }
 
 /**
@@ -3499,11 +3514,12 @@ function speakText(text, lang = 'fr-FR', options = {}) {
   utterance.pitch = options.pitch || 1.15;
   utterance.volume = 1;
 
-  // Use explicit voice if provided, or best voice found, or fallback
+  // Use explicit voice if provided, or best French voice, or fallback
   if (options.voice) {
     utterance.voice = options.voice;
-  } else if (bestFrenchVoice && lang.startsWith('fr')) {
-    utterance.voice = bestFrenchVoice;
+  } else if (lang.startsWith('fr')) {
+    var frVoice = ensureFrenchVoice();
+    if (frVoice) utterance.voice = frVoice;
   } else {
     const langVoice = voices.find(voice => voice.lang.startsWith(lang.substring(0, 2)));
     if (langVoice) utterance.voice = langVoice;
@@ -3549,8 +3565,8 @@ function speakLetter(letterName) {
     utterance.rate = 1.3;
     utterance.pitch = 1.2;
     utterance.volume = 1;
-    const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
-    if (frenchVoice) utterance.voice = frenchVoice;
+    var frV = ensureFrenchVoice();
+    if (frV) utterance.voice = frV;
     utterance.onerror = () => {}; // Silently ignore letter errors
     synth.speak(utterance);
   }, 80);
@@ -11313,7 +11329,10 @@ function poemLectureInit() {
     if (line.trim() === '') {
       html += '<div style="height:10px;"></div>';
     } else {
-      html += '<div class="poem-lecture-line" id="poemLectureLine' + i + '" onclick="poemLecturePlayFrom(' + i + ')" style="padding:3px 8px;border-radius:8px;transition:background 0.3s;cursor:pointer;">' + line + '</div>';
+      html += '<div class="poem-lecture-line" id="poemLectureLine' + i + '" onclick="poemLecturePlayFrom(' + i + ')" style="display:flex;align-items:center;gap:6px;padding:3px 8px;border-radius:8px;transition:background 0.3s;cursor:pointer;">';
+      html += '<span style="flex:1;">' + line + '</span>';
+      html += '<span onclick="event.stopPropagation();poemLectureSpeakLine(' + i + ')" style="flex-shrink:0;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#ccc;font-size:0.7rem;cursor:pointer;transition:all 0.2s;opacity:0.5;" onmouseover="this.style.opacity=\'1\';this.style.color=\'var(--purple)\'" onmouseout="this.style.opacity=\'0.5\';this.style.color=\'#ccc\'">&#x1f50a;</span>';
+      html += '</div>';
     }
   });
   html += '</div>';
@@ -11389,9 +11408,8 @@ function poemLecturePlay() {
     var utterance = new SpeechSynthesisUtterance(lines[lineIdx]);
     utterance.lang = 'fr-FR';
     utterance.rate = 0.85;
-    if (typeof bestFrenchVoice !== 'undefined' && bestFrenchVoice) {
-      utterance.voice = bestFrenchVoice;
-    }
+    var frV = ensureFrenchVoice();
+    if (frV) utterance.voice = frV;
     utterance.onend = function() {
       lineIdx++;
       speakNext();
@@ -11428,9 +11446,8 @@ function poemLecturePlayFrom(startIdx) {
     var utterance = new SpeechSynthesisUtterance(lines[lineIdx]);
     utterance.lang = 'fr-FR';
     utterance.rate = 0.85;
-    if (typeof bestFrenchVoice !== 'undefined' && bestFrenchVoice) {
-      utterance.voice = bestFrenchVoice;
-    }
+    var frV = ensureFrenchVoice();
+    if (frV) utterance.voice = frV;
     utterance.onend = function() {
       lineIdx++;
       speakNext();
@@ -11441,6 +11458,25 @@ function poemLecturePlayFrom(startIdx) {
     window.speechSynthesis.speak(utterance);
   }
   speakNext();
+}
+
+function poemLectureSpeakLine(idx) {
+  var lines = _poemLectureUtterances;
+  if (!lines || !lines[idx] || lines[idx].trim() === '') return;
+  window.speechSynthesis.cancel();
+  _poemLectureSpeaking = false;
+  _poemLecturePaused = false;
+  poemLectureClearHighlights();
+  poemLectureHighlight(idx);
+  var utterance = new SpeechSynthesisUtterance(lines[idx]);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 0.85;
+  var frV = ensureFrenchVoice();
+  if (frV) utterance.voice = frV;
+  utterance.onend = function() { poemLectureClearHighlights(); };
+  window.speechSynthesis.speak(utterance);
+  var btn = document.getElementById('poemLecturePlayBtn');
+  if (btn) btn.innerHTML = '▶️ Écouter';
 }
 
 function poemLectureStop() {
