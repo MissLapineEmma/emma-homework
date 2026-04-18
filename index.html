@@ -578,6 +578,99 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
 @media (max-width: 500px) {
   .reading-list-container { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ===========================
+   RESPONSIVE — MOBILE (iPhone)
+   =========================== */
+@media (max-width: 480px) {
+  .container { padding: 12px 10px; }
+
+  /* Home: logo & subtitle */
+  .logo { font-size: 1.6rem; }
+  .subtitle { font-size: 0.85rem; margin-bottom: 6px; }
+
+  /* Home: game cards grid */
+  .game-grid { gap: 10px; margin: 14px 0; }
+  .game-card { padding: 18px 12px 16px; border-radius: 16px; }
+  .game-card .card-icon { font-size: 2.2rem; margin-bottom: 6px; }
+  .game-card .card-title { font-size: 1rem; }
+  .game-card .card-desc { font-size: 0.75rem; }
+
+  /* Buttons */
+  .btn { font-size: 0.95rem; padding: 10px 22px; letter-spacing: 0.5px; }
+  .btn-secondary { font-size: 0.85rem; padding: 9px 20px; }
+  .btn-outline { font-size: 0.82rem; padding: 8px 18px; }
+
+  /* HUD / score boxes */
+  .hud { gap: 10px; }
+
+  /* Word display (spelling, vocab) */
+  .word-display { font-size: 1.8rem; }
+
+  /* Avatar grid */
+  .avatar-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  /* Weekly calendar: scroll is fine but reduce min-width */
+  .day-column { min-width: 100px; }
+
+  /* Conjugation rows */
+  .conj-pronoun { min-width: 60px; font-size: 0.9rem; }
+  .conj-input { font-size: 0.95rem; padding: 8px 10px; }
+  .conj-correction { white-space: normal; font-size: 0.82rem; }
+  .conj-row { gap: 8px; padding: 6px 8px; }
+
+  /* Photo vocab image */
+  .img-vocab-photo { width: 100%; max-width: 90vw; height: auto; max-height: 55vh; }
+
+  /* Poem strophe boxes */
+  .poem-strophe-box { padding: 10px 12px; font-size: 0.95rem; }
+
+  /* Vocab section headers */
+  .vocab-header h2 { font-size: 1.15rem; }
+
+  /* List cards */
+  .list-card { padding: 12px 14px; gap: 10px; }
+
+  /* Select header text */
+  .select-header { font-size: 1rem; }
+
+  /* Mode choice cards */
+  .mode-choice { min-width: 75px; padding: 10px 6px; font-size: 0.85rem; }
+
+  /* Record display */
+  .record-display { font-size: 0.9rem; padding: 8px 14px; }
+
+  /* Countdown overlay */
+  .countdown-number { font-size: 5rem; }
+
+  /* End screen */
+  .final-score { font-size: 3rem; }
+  .end-buttons { gap: 8px; }
+
+  /* Modal */
+  .modal-box { max-width: 92vw; padding: 20px 16px; }
+
+  /* Gamification bar */
+  .gami-level-bar { padding: 10px; }
+  .gami-xp-text { font-size: 0.72rem; }
+
+  /* Weekly stats */
+  .weekly-stats-row { gap: 6px; }
+  .weekly-stat-value { font-size: 1.2rem; }
+  .weekly-stat-label { font-size: 0.65rem; }
+
+  /* Back link */
+  .back-link { font-size: 0.85rem; margin-bottom: 12px; }
+
+  /* CLM game */
+  .clm-level-card { padding: 10px 12px; gap: 8px; }
+
+  /* Poem lecture: stack vignette above text */
+  #poemLectureVignette { width: 120px !important; min-height: 120px !important; }
+
+  /* Input area */
+  .input-area { gap: 8px; }
+}
 .reading-word.clm-current {
   background: #fff3cd;
   border: 2px solid #ffc107;
@@ -2884,7 +2977,7 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
       <div style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--purple);">📝 Test blanc</div>
       <div id="imgTestScore" style="font-size:0.82rem;color:#999;margin-top:4px;"></div>
     </div>
-    <div id="imgTestGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
+    <div id="imgTestGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;"></div>
     <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;" id="imgTestActions"></div>
   </div>
 
@@ -3058,9 +3151,9 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
     </div>
 
     <!-- The big table number on the side -->
-    <div style="position: relative; display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 10px;">
+    <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-top: 10px;">
       <div id="clockTableNumber" style="font-family:'Fredoka One',cursive; font-size:3.5rem; color:var(--purple); line-height:1;">×7</div>
-      <div id="clockFace" style="position:relative; width:260px; height:260px; flex-shrink:0;"></div>
+      <div id="clockFace" style="position:relative; width:min(260px, 70vw); height:min(260px, 70vw); flex-shrink:0;"></div>
     </div>
 
     <div class="feedback" id="clockFeedback" style="margin-top: 12px;"></div>
@@ -8288,7 +8381,7 @@ function imgReverseQuizRound() {
   choices.sort(function() { return Math.random() - 0.5; });
 
   // Show 3 photo choices
-  kb.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1200px;margin:0 auto;">' +
+  kb.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;max-width:1200px;margin:0 auto;">' +
     choices.map(function(c) {
       var cTransform = imgItemTransform(c);
       return '<div class="img-reverse-choice" data-word="' + c.word.replace(/"/g, '&quot;') + '" ' +
@@ -11207,10 +11300,10 @@ function poemLectureInit() {
   html += '<div style="font-size:0.82rem;color:#999;margin-top:2px;">par ' + (poem.author || 'Anonyme') + '</div>';
   html += '</div>';
 
-  html += '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:14px;">';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:center;margin-bottom:14px;">';
 
-  // Large vignette area (left)
-  html += '<div id="poemLectureVignette" style="flex-shrink:0;width:180px;min-height:180px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:#f8f6ff;overflow:hidden;transition:all 0.4s;">';
+  // Large vignette area (left, shrinks on mobile)
+  html += '<div id="poemLectureVignette" style="flex-shrink:0;width:min(180px,40vw);min-height:min(180px,40vw);display:flex;align-items:center;justify-content:center;border-radius:18px;background:#f8f6ff;overflow:hidden;transition:all 0.4s;">';
   html += '<div style="color:#ccc;font-size:3rem;">📜</div>';
   html += '</div>';
 
@@ -12351,10 +12444,10 @@ function poemImageOrderRender() {
   var total = io.cards.length;
 
   // Calculate image size to fit all in one row without scroll
-  // Available width ~600px, arrows ~20px each, gaps ~4px each
+  var availW = Math.min(600, window.innerWidth - 40);
   var arrowSpace = (total - 1) * 22;
-  var imgW = Math.floor((600 - arrowSpace) / total);
-  imgW = Math.max(40, Math.min(imgW, 80));
+  var imgW = Math.floor((availW - arrowSpace) / total);
+  imgW = Math.max(32, Math.min(imgW, 80));
 
   var html = '<div style="font-size:1rem;color:var(--purple);font-weight:800;margin-bottom:10px;text-align:center;">🖼️ Replace les images dans l\'ordre !</div>';
 
