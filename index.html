@@ -2098,9 +2098,14 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
 
     <div class="game-grid">
       <div class="game-card" onclick="startKanjiSelection()">
-        <div class="card-icon">漢</div>
-        <div class="card-title">Kanji</div>
-        <div class="card-desc">Apprends les caractères</div>
+        <div class="card-icon">🎤</div>
+        <div class="card-title">Kanji Voix</div>
+        <div class="card-desc">Dis la lecture du kanji</div>
+      </div>
+      <div class="game-card" onclick="startKanjiQuizSelection()">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Kanji Quiz</div>
+        <div class="card-desc">Choisis la bonne lecture</div>
       </div>
     </div>
   </div>
@@ -2733,19 +2738,66 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
     </div>
 
     <div class="word-card">
-      <div class="prompt-label" id="kanjiPrompt">Lis ce kanji :</div>
-      <div class="word-display" id="kanjiCharacter" style="font-size: 3.5rem;">漢</div>
+      <div class="prompt-label" id="kanjiPrompt">Dis ce kanji :</div>
+      <div class="word-display" id="kanjiCharacter" style="font-size: 4rem;">漢</div>
+      <div id="kanjiReadingHint" style="font-size:0.85rem;color:#ccc;margin-top:4px;"></div>
     </div>
 
-    <div class="input-area">
-      <input type="text" id="kanjiInput" placeholder="Réponse..." onkeypress="if(event.key==='Enter')checkKanjiAnswer()">
-      <button class="speak-btn" onclick="speakKanji()">🔊</button>
+    <div style="text-align:center;margin:12px 0 6px;">
+      <div id="kanjiHeard" style="font-size:1.2rem;color:var(--purple);font-weight:700;min-height:30px;"></div>
+      <div id="kanjiMicIndicator" style="font-size:1.4rem;opacity:0.3;margin-top:4px;transition:opacity 0.3s;">🎤</div>
     </div>
 
     <div class="feedback" id="kanjiFeedback"></div>
 
-    <div style="text-align: center; margin-top: 16px;">
-      <button class="btn btn-primary" onclick="checkKanjiAnswer()">Vérifier</button>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="speak-btn" onclick="speakKanji()" style="font-size:1.5rem;width:44px;height:44px;border-radius:50%;border:none;background:#f0eef6;cursor:pointer;" title="Écouter la réponse">🔊</button>
+    </div>
+  </div>
+
+  <!-- ===========================
+       KANJI QUIZ GAME SCREEN
+       =========================== -->
+  <div class="screen" id="kanjiQuizScreen">
+    <div class="quit-bar">
+      <button class="quit-btn" onclick="kanjiQuizStop();showScreen('japonaisScreen')">✕ Quitter</button>
+    </div>
+
+    <div class="hud">
+      <div class="score-box">
+        <div class="label">Score</div>
+        <div class="value" id="kqScore">0</div>
+      </div>
+      <div class="progress-box">
+        <div class="label">Progrès</div>
+        <div class="value" id="kqProgress">1/10</div>
+      </div>
+    </div>
+
+    <div class="word-card">
+      <div class="prompt-label">Quelle est la lecture de ce kanji ?</div>
+      <div class="word-display" id="kqCharacter" style="font-size:4.5rem;">漢</div>
+      <div id="kqMeaning" style="font-size:0.85rem;color:#bbb;margin-top:4px;"></div>
+    </div>
+
+    <div id="kqChoices" style="display:flex;flex-direction:column;gap:10px;margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto;"></div>
+
+    <div class="feedback" id="kqFeedback" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ===========================
+       KANJI QUIZ SELECTION SCREEN
+       =========================== -->
+  <div class="screen" id="kanjiQuizSelectionScreen">
+    <div class="back-link" onclick="showScreen('japonaisScreen')">← Retour</div>
+    <div class="logo">🧠 Kanji Quiz</div>
+    <div class="select-header">
+      <h2>Choisis ton niveau</h2>
+      <p>Trouve la bonne lecture parmi 3 choix</p>
+    </div>
+    <div id="kanjiQuizSetSelection"></div>
+    <div style="text-align:center;margin-top:18px;">
+      <button class="btn btn-primary" onclick="startKanjiQuizGame()">▶️ Commencer</button>
     </div>
   </div>
 
@@ -13862,94 +13914,561 @@ let kanjiState = {
   init: initKanjiGame
 };
 
-// Default kanji for demo
-const defaultKanji = [
-  { character: '一', readings: ['いち', 'ひと'] },
-  { character: '二', readings: ['に', 'ふた'] },
-  { character: '三', readings: ['さん', 'み'] },
-  { character: '四', readings: ['し', 'よん'] },
-  { character: '五', readings: ['ご', 'いつ'] },
-  { character: '六', readings: ['ろく', 'むつ'] },
-  { character: '七', readings: ['しち', 'なな'] },
-  { character: '八', readings: ['はち', 'や'] },
-  { character: '九', readings: ['きゅう', 'ここ'] },
-  { character: '十', readings: ['じゅう', 'とお'] },
-  { character: '木', readings: ['もく', 'き'] },
-  { character: '火', readings: ['か', 'ひ'] },
-  { character: '水', readings: ['すい', 'みず'] },
-  { character: '金', readings: ['きん', 'かね'] },
-  { character: '土', readings: ['ど', 'つち'] }
+// Kanji lists by grade level (Jōyō Kanji)
+var kanjiGrade1 = [
+  { character: '一', readings: ['いち', 'ひと', 'いつ'], meaning: 'un' },
+  { character: '二', readings: ['に', 'ふた'], meaning: 'deux' },
+  { character: '三', readings: ['さん', 'み'], meaning: 'trois' },
+  { character: '四', readings: ['し', 'よん', 'よ'], meaning: 'quatre' },
+  { character: '五', readings: ['ご', 'いつ'], meaning: 'cinq' },
+  { character: '六', readings: ['ろく', 'む', 'むつ'], meaning: 'six' },
+  { character: '七', readings: ['しち', 'なな'], meaning: 'sept' },
+  { character: '八', readings: ['はち', 'や', 'やつ'], meaning: 'huit' },
+  { character: '九', readings: ['きゅう', 'く', 'ここ'], meaning: 'neuf' },
+  { character: '十', readings: ['じゅう', 'とお'], meaning: 'dix' },
+  { character: '百', readings: ['ひゃく'], meaning: 'cent' },
+  { character: '千', readings: ['せん', 'ち'], meaning: 'mille' },
+  { character: '上', readings: ['じょう', 'うえ', 'あ'], meaning: 'haut' },
+  { character: '下', readings: ['か', 'した', 'さ', 'くだ'], meaning: 'bas' },
+  { character: '左', readings: ['さ', 'ひだり'], meaning: 'gauche' },
+  { character: '右', readings: ['う', 'ゆう', 'みぎ'], meaning: 'droite' },
+  { character: '大', readings: ['だい', 'たい', 'おお'], meaning: 'grand' },
+  { character: '中', readings: ['ちゅう', 'なか'], meaning: 'milieu' },
+  { character: '小', readings: ['しょう', 'ちい', 'こ', 'お'], meaning: 'petit' },
+  { character: '月', readings: ['げつ', 'がつ', 'つき'], meaning: 'lune/mois' },
+  { character: '日', readings: ['にち', 'じつ', 'ひ', 'か'], meaning: 'jour/soleil' },
+  { character: '年', readings: ['ねん', 'とし'], meaning: 'année' },
+  { character: '早', readings: ['そう', 'はや'], meaning: 'tôt' },
+  { character: '木', readings: ['もく', 'ぼく', 'き', 'こ'], meaning: 'arbre' },
+  { character: '林', readings: ['りん', 'はやし'], meaning: 'bois' },
+  { character: '森', readings: ['しん', 'もり'], meaning: 'forêt' },
+  { character: '山', readings: ['さん', 'やま'], meaning: 'montagne' },
+  { character: '川', readings: ['せん', 'かわ'], meaning: 'rivière' },
+  { character: '土', readings: ['ど', 'と', 'つち'], meaning: 'terre' },
+  { character: '空', readings: ['くう', 'そら', 'あ', 'から'], meaning: 'ciel/vide' },
+  { character: '田', readings: ['でん', 'た'], meaning: 'rizière' },
+  { character: '天', readings: ['てん', 'あめ', 'あま'], meaning: 'ciel' },
+  { character: '生', readings: ['せい', 'しょう', 'い', 'う', 'なま'], meaning: 'vie/naître' },
+  { character: '花', readings: ['か', 'はな'], meaning: 'fleur' },
+  { character: '草', readings: ['そう', 'くさ'], meaning: 'herbe' },
+  { character: '虫', readings: ['ちゅう', 'むし'], meaning: 'insecte' },
+  { character: '犬', readings: ['けん', 'いぬ'], meaning: 'chien' },
+  { character: '人', readings: ['じん', 'にん', 'ひと'], meaning: 'personne' },
+  { character: '名', readings: ['めい', 'みょう', 'な'], meaning: 'nom' },
+  { character: '女', readings: ['じょ', 'おんな', 'め'], meaning: 'femme' },
+  { character: '男', readings: ['だん', 'なん', 'おとこ'], meaning: 'homme' },
+  { character: '子', readings: ['し', 'す', 'こ'], meaning: 'enfant' },
+  { character: '目', readings: ['もく', 'め', 'ま'], meaning: 'œil' },
+  { character: '耳', readings: ['じ', 'みみ'], meaning: 'oreille' },
+  { character: '口', readings: ['こう', 'く', 'くち'], meaning: 'bouche' },
+  { character: '手', readings: ['しゅ', 'て', 'た'], meaning: 'main' },
+  { character: '足', readings: ['そく', 'あし', 'た'], meaning: 'pied' },
+  { character: '見', readings: ['けん', 'み'], meaning: 'voir' },
+  { character: '音', readings: ['おん', 'いん', 'おと', 'ね'], meaning: 'son' },
+  { character: '力', readings: ['りょく', 'りき', 'ちから'], meaning: 'force' },
+  { character: '気', readings: ['き', 'け'], meaning: 'esprit/air' },
+  { character: '円', readings: ['えん', 'まる'], meaning: 'cercle/yen' },
+  { character: '入', readings: ['にゅう', 'い', 'はい'], meaning: 'entrer' },
+  { character: '出', readings: ['しゅつ', 'で', 'だ'], meaning: 'sortir' },
+  { character: '立', readings: ['りつ', 'た'], meaning: 'se lever' },
+  { character: '休', readings: ['きゅう', 'やす'], meaning: 'repos' },
+  { character: '先', readings: ['せん', 'さき'], meaning: 'avant/bout' },
+  { character: '夕', readings: ['せき', 'ゆう'], meaning: 'soir' },
+  { character: '本', readings: ['ほん', 'もと'], meaning: 'livre/origine' },
+  { character: '文', readings: ['ぶん', 'もん', 'ふみ'], meaning: 'texte' },
+  { character: '字', readings: ['じ', 'あざ'], meaning: 'caractère' },
+  { character: '学', readings: ['がく', 'まな'], meaning: 'étudier' },
+  { character: '校', readings: ['こう'], meaning: 'école' },
+  { character: '村', readings: ['そん', 'むら'], meaning: 'village' },
+  { character: '町', readings: ['ちょう', 'まち'], meaning: 'ville' },
+  { character: '正', readings: ['せい', 'しょう', 'ただ', 'まさ'], meaning: 'correct' },
+  { character: '水', readings: ['すい', 'みず'], meaning: 'eau' },
+  { character: '火', readings: ['か', 'ひ', 'ほ'], meaning: 'feu' },
+  { character: '玉', readings: ['ぎょく', 'たま'], meaning: 'boule/bijou' },
+  { character: '王', readings: ['おう'], meaning: 'roi' },
+  { character: '石', readings: ['せき', 'しゃく', 'いし'], meaning: 'pierre' },
+  { character: '竹', readings: ['ちく', 'たけ'], meaning: 'bambou' },
+  { character: '糸', readings: ['し', 'いと'], meaning: 'fil' },
+  { character: '貝', readings: ['ばい', 'かい'], meaning: 'coquillage' },
+  { character: '車', readings: ['しゃ', 'くるま'], meaning: 'voiture' },
+  { character: '金', readings: ['きん', 'こん', 'かね', 'かな'], meaning: 'or/argent' },
+  { character: '雨', readings: ['う', 'あめ', 'あま'], meaning: 'pluie' },
+  { character: '赤', readings: ['せき', 'しゃく', 'あか'], meaning: 'rouge' },
+  { character: '青', readings: ['せい', 'しょう', 'あお'], meaning: 'bleu' },
+  { character: '白', readings: ['はく', 'びゃく', 'しろ'], meaning: 'blanc' }
 ];
 
-function renderKanjiSelection() {
-  const container = document.getElementById('kanjiSetSelection');
+var kanjiGrade2 = [
+  { character: '刀', readings: ['とう', 'かたな'], meaning: 'sabre' },
+  { character: '万', readings: ['まん', 'ばん'], meaning: 'dix mille' },
+  { character: '丸', readings: ['がん', 'まる'], meaning: 'rond' },
+  { character: '交', readings: ['こう', 'まじ', 'か'], meaning: 'croiser' },
+  { character: '光', readings: ['こう', 'ひかり', 'ひか'], meaning: 'lumière' },
+  { character: '会', readings: ['かい', 'え', 'あ'], meaning: 'rencontre' },
+  { character: '体', readings: ['たい', 'てい', 'からだ'], meaning: 'corps' },
+  { character: '何', readings: ['か', 'なに', 'なん'], meaning: 'quoi' },
+  { character: '作', readings: ['さく', 'さ', 'つく'], meaning: 'faire' },
+  { character: '元', readings: ['げん', 'がん', 'もと'], meaning: 'origine' },
+  { character: '兄', readings: ['けい', 'きょう', 'あに'], meaning: 'frère aîné' },
+  { character: '冬', readings: ['とう', 'ふゆ'], meaning: 'hiver' },
+  { character: '前', readings: ['ぜん', 'まえ'], meaning: 'devant' },
+  { character: '北', readings: ['ほく', 'きた'], meaning: 'nord' },
+  { character: '午', readings: ['ご', 'うま'], meaning: 'midi' },
+  { character: '半', readings: ['はん', 'なか'], meaning: 'moitié' },
+  { character: '南', readings: ['なん', 'みなみ'], meaning: 'sud' },
+  { character: '原', readings: ['げん', 'はら'], meaning: 'plaine' },
+  { character: '友', readings: ['ゆう', 'とも'], meaning: 'ami' },
+  { character: '古', readings: ['こ', 'ふる'], meaning: 'ancien' },
+  { character: '台', readings: ['だい', 'たい'], meaning: 'socle' },
+  { character: '合', readings: ['ごう', 'がっ', 'あ'], meaning: 'unir' },
+  { character: '同', readings: ['どう', 'おな'], meaning: 'même' },
+  { character: '回', readings: ['かい', 'まわ'], meaning: 'tourner/fois' },
+  { character: '図', readings: ['ず', 'と', 'はか'], meaning: 'dessin' },
+  { character: '国', readings: ['こく', 'くに'], meaning: 'pays' },
+  { character: '園', readings: ['えん', 'その'], meaning: 'jardin' },
+  { character: '地', readings: ['ち', 'じ'], meaning: 'sol/terre' },
+  { character: '場', readings: ['じょう', 'ば'], meaning: 'lieu' },
+  { character: '声', readings: ['せい', 'こえ', 'こわ'], meaning: 'voix' },
+  { character: '売', readings: ['ばい', 'う'], meaning: 'vendre' },
+  { character: '夏', readings: ['か', 'なつ'], meaning: 'été' },
+  { character: '外', readings: ['がい', 'げ', 'そと', 'ほか'], meaning: 'extérieur' },
+  { character: '多', readings: ['た', 'おお'], meaning: 'beaucoup' },
+  { character: '夜', readings: ['や', 'よる', 'よ'], meaning: 'nuit' },
+  { character: '太', readings: ['たい', 'た', 'ふと'], meaning: 'gros' },
+  { character: '妹', readings: ['まい', 'いもうと'], meaning: 'petite sœur' },
+  { character: '姉', readings: ['し', 'あね'], meaning: 'grande sœur' },
+  { character: '室', readings: ['しつ', 'むろ'], meaning: 'pièce' },
+  { character: '家', readings: ['か', 'け', 'いえ', 'や'], meaning: 'maison' },
+  { character: '寺', readings: ['じ', 'てら'], meaning: 'temple' },
+  { character: '少', readings: ['しょう', 'すく', 'すこ'], meaning: 'peu' },
+  { character: '岩', readings: ['がん', 'いわ'], meaning: 'rocher' },
+  { character: '工', readings: ['こう', 'く'], meaning: 'travail' },
+  { character: '市', readings: ['し', 'いち'], meaning: 'marché/ville' },
+  { character: '帰', readings: ['き', 'かえ'], meaning: 'rentrer' },
+  { character: '広', readings: ['こう', 'ひろ'], meaning: 'large' },
+  { character: '店', readings: ['てん', 'みせ'], meaning: 'magasin' },
+  { character: '弓', readings: ['きゅう', 'ゆみ'], meaning: 'arc' },
+  { character: '引', readings: ['いん', 'ひ'], meaning: 'tirer' },
+  { character: '弟', readings: ['てい', 'だい', 'おとうと'], meaning: 'petit frère' },
+  { character: '弱', readings: ['じゃく', 'よわ'], meaning: 'faible' },
+  { character: '強', readings: ['きょう', 'ごう', 'つよ'], meaning: 'fort' },
+  { character: '当', readings: ['とう', 'あ'], meaning: 'toucher/juste' },
+  { character: '心', readings: ['しん', 'こころ'], meaning: 'cœur' },
+  { character: '思', readings: ['し', 'おも'], meaning: 'penser' },
+  { character: '星', readings: ['せい', 'ほし'], meaning: 'étoile' },
+  { character: '春', readings: ['しゅん', 'はる'], meaning: 'printemps' },
+  { character: '時', readings: ['じ', 'とき'], meaning: 'temps/heure' },
+  { character: '晴', readings: ['せい', 'は'], meaning: 'beau temps' },
+  { character: '書', readings: ['しょ', 'か'], meaning: 'écrire' },
+  { character: '朝', readings: ['ちょう', 'あさ'], meaning: 'matin' },
+  { character: '活', readings: ['かつ'], meaning: 'vie active' },
+  { character: '海', readings: ['かい', 'うみ'], meaning: 'mer' },
+  { character: '点', readings: ['てん'], meaning: 'point' },
+  { character: '父', readings: ['ふ', 'ちち'], meaning: 'père' },
+  { character: '母', readings: ['ぼ', 'はは'], meaning: 'mère' },
+  { character: '毎', readings: ['まい'], meaning: 'chaque' },
+  { character: '池', readings: ['ち', 'いけ'], meaning: 'étang' },
+  { character: '汽', readings: ['き'], meaning: 'vapeur' },
+  { character: '秋', readings: ['しゅう', 'あき'], meaning: 'automne' },
+  { character: '科', readings: ['か'], meaning: 'science' },
+  { character: '答', readings: ['とう', 'こた'], meaning: 'réponse' },
+  { character: '算', readings: ['さん'], meaning: 'calcul' },
+  { character: '米', readings: ['べい', 'まい', 'こめ'], meaning: 'riz' },
+  { character: '紙', readings: ['し', 'かみ'], meaning: 'papier' },
+  { character: '細', readings: ['さい', 'ほそ', 'こま'], meaning: 'fin/mince' },
+  { character: '組', readings: ['そ', 'く', 'くみ'], meaning: 'groupe' },
+  { character: '絵', readings: ['かい', 'え'], meaning: 'dessin' },
+  { character: '線', readings: ['せん'], meaning: 'ligne' },
+  { character: '自', readings: ['じ', 'し', 'みずか'], meaning: 'soi-même' },
+  { character: '船', readings: ['せん', 'ふね', 'ふな'], meaning: 'bateau' },
+  { character: '色', readings: ['しょく', 'しき', 'いろ'], meaning: 'couleur' },
+  { character: '茶', readings: ['ちゃ', 'さ'], meaning: 'thé' },
+  { character: '行', readings: ['こう', 'ぎょう', 'い', 'ゆ'], meaning: 'aller' },
+  { character: '西', readings: ['せい', 'さい', 'にし'], meaning: 'ouest' },
+  { character: '角', readings: ['かく', 'かど', 'つの'], meaning: 'angle/corne' },
+  { character: '言', readings: ['げん', 'ごん', 'い', 'こと'], meaning: 'dire' },
+  { character: '計', readings: ['けい', 'はか'], meaning: 'compter' },
+  { character: '記', readings: ['き', 'しる'], meaning: 'noter' },
+  { character: '話', readings: ['わ', 'はな', 'はなし'], meaning: 'parler' },
+  { character: '語', readings: ['ご', 'かた'], meaning: 'langue' },
+  { character: '読', readings: ['どく', 'とく', 'よ'], meaning: 'lire' },
+  { character: '谷', readings: ['こく', 'たに'], meaning: 'vallée' },
+  { character: '買', readings: ['ばい', 'か'], meaning: 'acheter' },
+  { character: '走', readings: ['そう', 'はし'], meaning: 'courir' },
+  { character: '近', readings: ['きん', 'ちか'], meaning: 'proche' },
+  { character: '通', readings: ['つう', 'とお', 'かよ'], meaning: 'passer' },
+  { character: '週', readings: ['しゅう'], meaning: 'semaine' },
+  { character: '道', readings: ['どう', 'みち'], meaning: 'chemin' },
+  { character: '遠', readings: ['えん', 'おん', 'とお'], meaning: 'loin' },
+  { character: '里', readings: ['り', 'さと'], meaning: 'village' },
+  { character: '野', readings: ['や', 'の'], meaning: 'champ' },
+  { character: '長', readings: ['ちょう', 'なが'], meaning: 'long/chef' },
+  { character: '門', readings: ['もん', 'かど'], meaning: 'porte' },
+  { character: '間', readings: ['かん', 'けん', 'あいだ', 'ま'], meaning: 'entre' },
+  { character: '雪', readings: ['せつ', 'ゆき'], meaning: 'neige' },
+  { character: '雲', readings: ['うん', 'くも'], meaning: 'nuage' },
+  { character: '電', readings: ['でん'], meaning: 'électricité' },
+  { character: '食', readings: ['しょく', 'た', 'く'], meaning: 'manger' },
+  { character: '首', readings: ['しゅ', 'くび'], meaning: 'cou' },
+  { character: '馬', readings: ['ば', 'うま', 'ま'], meaning: 'cheval' },
+  { character: '高', readings: ['こう', 'たか'], meaning: 'haut/cher' },
+  { character: '魚', readings: ['ぎょ', 'うお', 'さかな'], meaning: 'poisson' },
+  { character: '鳥', readings: ['ちょう', 'とり'], meaning: 'oiseau' },
+  { character: '鳴', readings: ['めい', 'な'], meaning: 'crier (animal)' },
+  { character: '黄', readings: ['おう', 'こう', 'き'], meaning: 'jaune' },
+  { character: '黒', readings: ['こく', 'くろ'], meaning: 'noir' }
+];
 
-  const sets = [
-    { name: 'Nombres (1-10)', emoji: '🔢', count: 10 },
-    { name: 'Éléments', emoji: '⚡', count: 5 },
-    { name: 'Tous les kanji', emoji: '漢', count: 15 }
+var kanjiGrade3 = [
+  { character: '世', readings: ['せい', 'せ', 'よ'], meaning: 'monde' },
+  { character: '主', readings: ['しゅ', 'す', 'ぬし', 'おも'], meaning: 'maître' },
+  { character: '乗', readings: ['じょう', 'の'], meaning: 'monter' },
+  { character: '事', readings: ['じ', 'ず', 'こと'], meaning: 'chose/affaire' },
+  { character: '仕', readings: ['し', 'じ', 'つか'], meaning: 'servir' },
+  { character: '他', readings: ['た', 'ほか'], meaning: 'autre' },
+  { character: '代', readings: ['だい', 'たい', 'か', 'よ', 'しろ'], meaning: 'remplacer/époque' },
+  { character: '住', readings: ['じゅう', 'す'], meaning: 'habiter' },
+  { character: '使', readings: ['し', 'つか'], meaning: 'utiliser' },
+  { character: '係', readings: ['けい', 'かかり', 'かか'], meaning: 'rapport' },
+  { character: '倍', readings: ['ばい'], meaning: 'double' },
+  { character: '全', readings: ['ぜん', 'まった', 'すべ'], meaning: 'tout' },
+  { character: '具', readings: ['ぐ'], meaning: 'outil' },
+  { character: '写', readings: ['しゃ', 'うつ'], meaning: 'copier' },
+  { character: '列', readings: ['れつ'], meaning: 'rangée' },
+  { character: '助', readings: ['じょ', 'たす', 'すけ'], meaning: 'aider' },
+  { character: '動', readings: ['どう', 'うご'], meaning: 'bouger' },
+  { character: '勝', readings: ['しょう', 'か', 'まさ'], meaning: 'gagner' },
+  { character: '化', readings: ['か', 'け', 'ば'], meaning: 'changer' },
+  { character: '区', readings: ['く'], meaning: 'quartier' },
+  { character: '医', readings: ['い'], meaning: 'médecin' },
+  { character: '去', readings: ['きょ', 'こ', 'さ'], meaning: 'quitter' },
+  { character: '反', readings: ['はん', 'ほん', 'たん', 'そ'], meaning: 'contre' },
+  { character: '取', readings: ['しゅ', 'と'], meaning: 'prendre' },
+  { character: '受', readings: ['じゅ', 'う'], meaning: 'recevoir' },
+  { character: '号', readings: ['ごう'], meaning: 'numéro' },
+  { character: '向', readings: ['こう', 'む'], meaning: 'direction' },
+  { character: '君', readings: ['くん', 'きみ'], meaning: 'toi (familier)' },
+  { character: '味', readings: ['み', 'あじ'], meaning: 'goût' },
+  { character: '命', readings: ['めい', 'みょう', 'いのち'], meaning: 'vie' },
+  { character: '品', readings: ['ひん', 'しな'], meaning: 'article' },
+  { character: '員', readings: ['いん'], meaning: 'membre' },
+  { character: '商', readings: ['しょう', 'あきな'], meaning: 'commerce' },
+  { character: '問', readings: ['もん', 'と'], meaning: 'question' },
+  { character: '坂', readings: ['はん', 'さか'], meaning: 'pente' },
+  { character: '央', readings: ['おう'], meaning: 'centre' },
+  { character: '始', readings: ['し', 'はじ'], meaning: 'commencer' },
+  { character: '安', readings: ['あん', 'やす'], meaning: 'calme/pas cher' },
+  { character: '定', readings: ['てい', 'じょう', 'さだ'], meaning: 'fixer' },
+  { character: '実', readings: ['じつ', 'み', 'みの'], meaning: 'réalité/fruit' },
+  { character: '客', readings: ['きゃく', 'かく'], meaning: 'client' },
+  { character: '宮', readings: ['きゅう', 'ぐう', 'く', 'みや'], meaning: 'palais' },
+  { character: '宿', readings: ['しゅく', 'やど'], meaning: 'auberge' },
+  { character: '寒', readings: ['かん', 'さむ'], meaning: 'froid' },
+  { character: '対', readings: ['たい', 'つい'], meaning: 'contre' },
+  { character: '届', readings: ['とど'], meaning: 'livrer' },
+  { character: '届', readings: ['とど'], meaning: 'livrer' },
+  { character: '屋', readings: ['おく', 'や'], meaning: 'toit/magasin' },
+  { character: '島', readings: ['とう', 'しま'], meaning: 'île' },
+  { character: '州', readings: ['しゅう', 'す'], meaning: 'province' },
+  { character: '帳', readings: ['ちょう'], meaning: 'carnet' },
+  { character: '平', readings: ['へい', 'びょう', 'たい', 'ひら'], meaning: 'plat' },
+  { character: '幸', readings: ['こう', 'さいわ', 'さち', 'しあわ'], meaning: 'bonheur' },
+  { character: '度', readings: ['ど', 'たく', 'たび'], meaning: 'degré/fois' },
+  { character: '庫', readings: ['こ', 'く'], meaning: 'entrepôt' },
+  { character: '庭', readings: ['てい', 'にわ'], meaning: 'jardin' },
+  { character: '式', readings: ['しき'], meaning: 'cérémonie' },
+  { character: '役', readings: ['やく', 'えき'], meaning: 'rôle' },
+  { character: '待', readings: ['たい', 'ま'], meaning: 'attendre' },
+  { character: '急', readings: ['きゅう', 'いそ'], meaning: 'urgent' },
+  { character: '息', readings: ['そく', 'いき'], meaning: 'souffle' },
+  { character: '悪', readings: ['あく', 'お', 'わる'], meaning: 'mauvais' },
+  { character: '悲', readings: ['ひ', 'かな'], meaning: 'triste' },
+  { character: '想', readings: ['そう', 'そ'], meaning: 'idée' },
+  { character: '意', readings: ['い'], meaning: 'intention' },
+  { character: '感', readings: ['かん'], meaning: 'sentiment' },
+  { character: '所', readings: ['しょ', 'ところ'], meaning: 'lieu' },
+  { character: '打', readings: ['だ', 'う'], meaning: 'frapper' },
+  { character: '投', readings: ['とう', 'な'], meaning: 'lancer' },
+  { character: '拾', readings: ['しゅう', 'じゅう', 'ひろ'], meaning: 'ramasser' },
+  { character: '持', readings: ['じ', 'も'], meaning: 'tenir' },
+  { character: '指', readings: ['し', 'ゆび', 'さ'], meaning: 'doigt' },
+  { character: '放', readings: ['ほう', 'はな'], meaning: 'libérer' },
+  { character: '整', readings: ['せい', 'ととの'], meaning: 'arranger' },
+  { character: '旅', readings: ['りょ', 'たび'], meaning: 'voyage' },
+  { character: '族', readings: ['ぞく'], meaning: 'famille/clan' },
+  { character: '暑', readings: ['しょ', 'あつ'], meaning: 'chaud' },
+  { character: '暗', readings: ['あん', 'くら'], meaning: 'sombre' },
+  { character: '曲', readings: ['きょく', 'ま'], meaning: 'courbe/musique' },
+  { character: '有', readings: ['ゆう', 'う', 'あ'], meaning: 'avoir' },
+  { character: '服', readings: ['ふく'], meaning: 'vêtement' },
+  { character: '期', readings: ['き', 'ご'], meaning: 'période' },
+  { character: '板', readings: ['はん', 'ばん', 'いた'], meaning: 'planche' },
+  { character: '柱', readings: ['ちゅう', 'はしら'], meaning: 'pilier' },
+  { character: '根', readings: ['こん', 'ね'], meaning: 'racine' },
+  { character: '植', readings: ['しょく', 'う'], meaning: 'planter' },
+  { character: '業', readings: ['ぎょう', 'ごう', 'わざ'], meaning: 'profession' },
+  { character: '様', readings: ['よう', 'さま'], meaning: 'aspect/M./Mme' },
+  { character: '橋', readings: ['きょう', 'はし'], meaning: 'pont' },
+  { character: '次', readings: ['じ', 'し', 'つぎ', 'つ'], meaning: 'suivant' },
+  { character: '歯', readings: ['し', 'は'], meaning: 'dent' },
+  { character: '死', readings: ['し', 'し'], meaning: 'mourir' },
+  { character: '氷', readings: ['ひょう', 'こおり', 'ひ'], meaning: 'glace' },
+  { character: '決', readings: ['けつ', 'き'], meaning: 'décider' },
+  { character: '油', readings: ['ゆ', 'あぶら'], meaning: 'huile' },
+  { character: '波', readings: ['は', 'なみ'], meaning: 'vague' },
+  { character: '注', readings: ['ちゅう', 'そそ'], meaning: 'verser' },
+  { character: '泳', readings: ['えい', 'およ'], meaning: 'nager' },
+  { character: '洋', readings: ['よう'], meaning: 'océan' },
+  { character: '流', readings: ['りゅう', 'る', 'なが'], meaning: 'couler' },
+  { character: '消', readings: ['しょう', 'き', 'け'], meaning: 'effacer' },
+  { character: '深', readings: ['しん', 'ふか', 'ふ'], meaning: 'profond' },
+  { character: '温', readings: ['おん', 'あたた'], meaning: 'tiède' },
+  { character: '港', readings: ['こう', 'みなと'], meaning: 'port' },
+  { character: '湖', readings: ['こ', 'みずうみ'], meaning: 'lac' },
+  { character: '湯', readings: ['とう', 'ゆ'], meaning: 'eau chaude' },
+  { character: '漢', readings: ['かん'], meaning: 'Chine/kanji' },
+  { character: '物', readings: ['ぶつ', 'もつ', 'もの'], meaning: 'chose' },
+  { character: '球', readings: ['きゅう', 'たま'], meaning: 'balle' },
+  { character: '理', readings: ['り'], meaning: 'raison' },
+  { character: '発', readings: ['はつ', 'ほつ'], meaning: 'départ' },
+  { character: '登', readings: ['とう', 'と', 'のぼ'], meaning: 'grimper' },
+  { character: '皮', readings: ['ひ', 'かわ'], meaning: 'peau' },
+  { character: '皿', readings: ['べい', 'さら'], meaning: 'assiette' },
+  { character: '相', readings: ['そう', 'しょう', 'あい'], meaning: 'mutuel' },
+  { character: '県', readings: ['けん'], meaning: 'préfecture' },
+  { character: '研', readings: ['けん', 'と'], meaning: 'polir' },
+  { character: '神', readings: ['しん', 'じん', 'かみ', 'かん', 'こう'], meaning: 'dieu' },
+  { character: '祭', readings: ['さい', 'まつ'], meaning: 'fête' },
+  { character: '福', readings: ['ふく'], meaning: 'bonheur' },
+  { character: '秒', readings: ['びょう'], meaning: 'seconde' },
+  { character: '究', readings: ['きゅう', 'きわ'], meaning: 'rechercher' },
+  { character: '章', readings: ['しょう'], meaning: 'chapitre' },
+  { character: '童', readings: ['どう', 'わらべ'], meaning: 'enfant' },
+  { character: '笛', readings: ['てき', 'ふえ'], meaning: 'flûte' },
+  { character: '等', readings: ['とう', 'ひと'], meaning: 'égal' },
+  { character: '箱', readings: ['はこ'], meaning: 'boîte' },
+  { character: '級', readings: ['きゅう'], meaning: 'classe/rang' },
+  { character: '終', readings: ['しゅう', 'お'], meaning: 'finir' },
+  { character: '緑', readings: ['りょく', 'ろく', 'みどり'], meaning: 'vert' },
+  { character: '練', readings: ['れん', 'ね'], meaning: 's\'entraîner' },
+  { character: '羊', readings: ['よう', 'ひつじ'], meaning: 'mouton' },
+  { character: '美', readings: ['び', 'うつく'], meaning: 'beauté' },
+  { character: '習', readings: ['しゅう', 'なら'], meaning: 'apprendre' },
+  { character: '者', readings: ['しゃ', 'もの'], meaning: 'personne' },
+  { character: '育', readings: ['いく', 'そだ'], meaning: 'élever' },
+  { character: '苦', readings: ['く', 'くる', 'にが'], meaning: 'souffrir' },
+  { character: '荷', readings: ['か', 'に'], meaning: 'charge' },
+  { character: '落', readings: ['らく', 'お'], meaning: 'tomber' },
+  { character: '葉', readings: ['よう', 'は'], meaning: 'feuille' },
+  { character: '薬', readings: ['やく', 'くすり'], meaning: 'médicament' },
+  { character: '血', readings: ['けつ', 'ち'], meaning: 'sang' },
+  { character: '表', readings: ['ひょう', 'おもて', 'あらわ'], meaning: 'surface' },
+  { character: '詩', readings: ['し'], meaning: 'poème' },
+  { character: '調', readings: ['ちょう', 'しら', 'ととの'], meaning: 'enquêter' },
+  { character: '談', readings: ['だん'], meaning: 'discuter' },
+  { character: '豆', readings: ['とう', 'ず', 'まめ'], meaning: 'haricot' },
+  { character: '負', readings: ['ふ', 'ま', 'お'], meaning: 'perdre' },
+  { character: '起', readings: ['き', 'お'], meaning: 'se lever' },
+  { character: '路', readings: ['ろ', 'じ', 'みち'], meaning: 'route' },
+  { character: '身', readings: ['しん', 'み'], meaning: 'corps' },
+  { character: '転', readings: ['てん', 'ころ'], meaning: 'tourner' },
+  { character: '軽', readings: ['けい', 'かる', 'かろ'], meaning: 'léger' },
+  { character: '農', readings: ['のう'], meaning: 'agriculture' },
+  { character: '返', readings: ['へん', 'かえ'], meaning: 'retourner' },
+  { character: '都', readings: ['と', 'つ', 'みやこ'], meaning: 'capitale' },
+  { character: '部', readings: ['ぶ', 'べ'], meaning: 'partie' },
+  { character: '配', readings: ['はい', 'くば'], meaning: 'distribuer' },
+  { character: '酒', readings: ['しゅ', 'さけ', 'さか'], meaning: 'alcool' },
+  { character: '重', readings: ['じゅう', 'ちょう', 'おも', 'え', 'かさ'], meaning: 'lourd' },
+  { character: '鉄', readings: ['てつ'], meaning: 'fer' },
+  { character: '銀', readings: ['ぎん'], meaning: 'argent' },
+  { character: '開', readings: ['かい', 'あ', 'ひら'], meaning: 'ouvrir' },
+  { character: '院', readings: ['いん'], meaning: 'institution' },
+  { character: '階', readings: ['かい'], meaning: 'étage' },
+  { character: '集', readings: ['しゅう', 'あつ', 'つど'], meaning: 'rassembler' },
+  { character: '面', readings: ['めん', 'おも', 'おもて', 'つら'], meaning: 'visage/surface' },
+  { character: '題', readings: ['だい'], meaning: 'sujet' },
+  { character: '飲', readings: ['いん', 'の'], meaning: 'boire' },
+  { character: '館', readings: ['かん', 'やかた'], meaning: 'bâtiment' },
+  { character: '鼻', readings: ['び', 'はな'], meaning: 'nez' }
+];
+
+// Combined default for backward compat
+var defaultKanji = kanjiGrade1;
+
+function renderKanjiSelection() {
+  var container = document.getElementById('kanjiSetSelection');
+
+  var sets = [
+    { name: '一年生 (Ichi nensei)', emoji: '🌸', list: kanjiGrade1, desc: 'CP — ' + kanjiGrade1.length + ' kanji' },
+    { name: '二年生 (Ni nensei)', emoji: '🎋', list: kanjiGrade2, desc: 'CE1 — ' + kanjiGrade2.length + ' kanji' },
+    { name: '三年生 (San nensei)', emoji: '🏯', list: kanjiGrade3, desc: 'CE2 — ' + kanjiGrade3.length + ' kanji' }
   ];
 
-  container.innerHTML = `
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-      ${sets.map((set, idx) => `
-        <div class="game-card" onclick="selectKanjiSet(${idx})">
-          <div class="card-icon">${set.emoji}</div>
-          <div class="card-title">${set.name}</div>
-          <div class="card-desc">${set.count} kanji</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
+  var html = '<div style="display:grid;grid-template-columns:1fr;gap:12px;">';
+  sets.forEach(function(set, idx) {
+    html += '<div class="game-card" onclick="selectKanjiSet(' + idx + ')" style="text-align:left;display:flex;align-items:center;gap:14px;padding:16px 18px;">';
+    html += '<div style="font-size:2.2rem;flex-shrink:0;">' + set.emoji + '</div>';
+    html += '<div>';
+    html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.05rem;color:var(--dark);">' + set.name + '</div>';
+    html += '<div style="font-size:0.8rem;color:#999;margin-top:2px;">' + set.desc + '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 function selectKanjiSet(setIdx) {
+  var lists = [kanjiGrade1, kanjiGrade2, kanjiGrade3];
   kanjiState.selectedSet = setIdx;
+  kanjiState.selectedList = lists[setIdx] || kanjiGrade1;
   startKanjiGame();
 }
 
+var _kanjiMicRecognition = null;
+var _kanjiMicListening = false;
+
 function initKanjiGame() {
-  kanjiState.kanji = defaultKanji.sort(() => Math.random() - 0.5);
+  var list = kanjiState.selectedList || kanjiGrade1;
+  // Shuffle a copy
+  kanjiState.kanji = list.slice().sort(function() { return Math.random() - 0.5; });
   kanjiState.currentKanji = 0;
   kanjiState.score = 0;
   kanjiState.correct = 0;
+  _kanjiMicListening = false;
 
   loadKanjiCharacter();
 }
 
+var _kanjiAnswering = false;
+
 function loadKanjiCharacter() {
+  kanjiMicStop();
+  _kanjiAnswering = false;
   if (kanjiState.currentKanji >= kanjiState.kanji.length) {
     endKanjiGame();
     return;
   }
 
-  const kanji = kanjiState.kanji[kanjiState.currentKanji];
+  var kanji = kanjiState.kanji[kanjiState.currentKanji];
   document.getElementById('kanjiCharacter').textContent = kanji.character;
-  document.getElementById('kanjiInput').value = '';
-  document.getElementById('kanjiInput').className = '';
   document.getElementById('kanjiFeedback').textContent = '';
-  document.getElementById('kanjiProgress').textContent =
-    `${kanjiState.currentKanji + 1}/${kanjiState.kanji.length}`;
+  document.getElementById('kanjiFeedback').className = 'feedback';
+  document.getElementById('kanjiProgress').textContent = (kanjiState.currentKanji + 1) + '/' + kanjiState.kanji.length;
   document.getElementById('kanjiScore').textContent = kanjiState.score;
+  var hintEl = document.getElementById('kanjiReadingHint');
+  if (hintEl) hintEl.textContent = kanji.meaning ? '(' + kanji.meaning + ')' : '';
+  var heardEl = document.getElementById('kanjiHeard');
+  if (heardEl) heardEl.textContent = '';
 
-  document.getElementById('kanjiInput').focus();
+  // Auto-start listening
+  setTimeout(function() { kanjiMicStart(); }, 300);
 }
 
-function checkKanjiAnswer() {
-  const userAnswer = document.getElementById('kanjiInput').value.trim().toLowerCase();
-  const kanji = kanjiState.kanji[kanjiState.currentKanji];
-  const input = document.getElementById('kanjiInput');
+function kanjiMicStart() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    return;
+  }
+  ensureMicPermission();
+  if (_kanjiMicRecognition) { try { _kanjiMicRecognition.stop(); } catch(e) {} }
 
-  let correct = false;
-  for (let reading of kanji.readings) {
-    if (userAnswer === reading.toLowerCase()) {
-      correct = true;
-      break;
+  var SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  _kanjiMicRecognition = new SpeechRecognitionAPI();
+  _kanjiMicRecognition.lang = 'ja-JP';
+  _kanjiMicRecognition.continuous = false;
+  _kanjiMicRecognition.interimResults = true;
+  _kanjiMicRecognition.maxAlternatives = 5;
+
+  _kanjiMicRecognition.onresult = function(event) {
+    var interimText = '';
+    var finalText = '';
+    for (var i = 0; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalText += event.results[i][0].transcript;
+      } else {
+        interimText += event.results[i][0].transcript;
+      }
+    }
+    var heardEl = document.getElementById('kanjiHeard');
+    if (heardEl) heardEl.textContent = finalText || interimText;
+
+    if (finalText && !_kanjiAnswering) {
+      _kanjiAnswering = true;
+      checkKanjiVoiceAnswer(finalText, event.results);
+    }
+  };
+
+  _kanjiMicRecognition.onerror = function(e) {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.log('Kanji mic error:', e.error);
+    }
+  };
+
+  _kanjiMicRecognition.onend = function() {
+    _kanjiMicListening = false;
+    var ind = document.getElementById('kanjiMicIndicator');
+    if (ind) ind.style.opacity = '0.3';
+    // Auto-restart if game still active and not answering
+    if (!_kanjiAnswering && kanjiState.currentKanji < kanjiState.kanji.length) {
+      setTimeout(function() { kanjiMicStart(); }, 200);
+    }
+  };
+
+  try {
+    _kanjiMicRecognition.start();
+    _kanjiMicListening = true;
+    var ind = document.getElementById('kanjiMicIndicator');
+    if (ind) ind.style.opacity = '1';
+  } catch(e) {}
+}
+
+function kanjiMicStop() {
+  _kanjiMicListening = false;
+  if (_kanjiMicRecognition) {
+    try { _kanjiMicRecognition.stop(); } catch(e) {}
+    _kanjiMicRecognition = null;
+  }
+  var ind = document.getElementById('kanjiMicIndicator');
+  if (ind) ind.style.opacity = '0.3';
+}
+
+function normalizeJapanese(s) {
+  // Convert katakana to hiragana for comparison
+  return s.replace(/[\u30A1-\u30F6]/g, function(ch) {
+    return String.fromCharCode(ch.charCodeAt(0) - 0x60);
+  }).replace(/\s+/g, '').toLowerCase();
+}
+
+function checkKanjiVoiceAnswer(transcript, results) {
+  var kanji = kanjiState.kanji[kanjiState.currentKanji];
+  var normTranscript = normalizeJapanese(transcript);
+
+  // Check all alternatives across all results
+  var allTranscripts = [normTranscript];
+  if (results) {
+    for (var i = 0; i < results.length; i++) {
+      for (var j = 0; j < results[i].length; j++) {
+        allTranscripts.push(normalizeJapanese(results[i][j].transcript));
+      }
     }
   }
 
+  var correct = false;
+  for (var t = 0; t < allTranscripts.length && !correct; t++) {
+    var heard = allTranscripts[t];
+    for (var r = 0; r < kanji.readings.length; r++) {
+      var reading = normalizeJapanese(kanji.readings[r]);
+      if (heard === reading || heard.indexOf(reading) !== -1 || reading.indexOf(heard) !== -1) {
+        correct = true;
+        break;
+      }
+    }
+    // Also check if they said the kanji character itself
+    if (heard === kanji.character) correct = true;
+  }
+
   if (correct) {
-    input.classList.add('correct');
     document.getElementById('kanjiFeedback').textContent = '✓ Bien joué !';
     document.getElementById('kanjiFeedback').className = 'feedback correct-fb';
     kanjiState.score += 10;
@@ -13957,39 +14476,217 @@ function checkKanjiAnswer() {
     gamiCorrectAnswer();
     document.getElementById('kanjiScore').textContent = kanjiState.score;
 
-    setTimeout(() => {
+    setTimeout(function() {
       kanjiState.currentKanji++;
       loadKanjiCharacter();
-    }, 600);
+    }, 800);
   } else {
-    input.classList.add('wrong');
-    const readings = kanji.readings.join(' ou ');
-    document.getElementById('kanjiFeedback').textContent = `✗ Non, c'est: ${readings}`;
+    var readings = kanji.readings.join(' / ');
+    document.getElementById('kanjiFeedback').innerHTML = '✗ C\'est : <strong>' + readings + '</strong>';
     document.getElementById('kanjiFeedback').className = 'feedback wrong-fb';
     gamiWrongAnswer();
 
-    setTimeout(() => {
+    setTimeout(function() {
       kanjiState.currentKanji++;
       loadKanjiCharacter();
-    }, 1200);
+    }, 1500);
   }
 }
 
 function speakKanji() {
-  const kanji = kanjiState.kanji[kanjiState.currentKanji];
-  const reading = kanji.readings[0];
-  speakText(reading);
+  var kanji = kanjiState.kanji[kanjiState.currentKanji];
+  if (!kanji) return;
+  var reading = kanji.readings[0];
+  var utterance = new SpeechSynthesisUtterance(reading);
+  utterance.lang = 'ja-JP';
+  utterance.rate = 0.8;
+  // Try to find a Japanese voice
+  var voices = window.speechSynthesis.getVoices();
+  var jaVoice = null;
+  for (var i = 0; i < voices.length; i++) {
+    if (voices[i].lang && voices[i].lang.startsWith('ja')) { jaVoice = voices[i]; break; }
+  }
+  if (jaVoice) utterance.voice = jaVoice;
+  window.speechSynthesis.speak(utterance);
 }
 
 function endKanjiGame() {
-  const accuracy = Math.round((kanjiState.correct / kanjiState.kanji.length) * 100);
-  const stars = accuracy >= 80 ? 3 : accuracy >= 60 ? 2 : 1;
+  kanjiMicStop();
+  var accuracy = Math.round((kanjiState.correct / kanjiState.kanji.length) * 100);
+  var stars = accuracy >= 80 ? 3 : accuracy >= 60 ? 2 : 1;
 
   addGameSession('Kanji', kanjiState.score, 0);
   setGameRecord('Kanji_score', kanjiState.score);
   showEndScreen(kanjiState.score, stars, 'Bravo pour ton apprentissage du Japonais !');
 }
 
+/* ===========================
+   KANJI QUIZ MINI-GAME (multiple choice)
+   =========================== */
+var _kqState = null;
+
+function startKanjiQuizSelection() {
+  showScreen('kanjiQuizSelectionScreen');
+  renderKanjiQuizSelection();
+}
+
+function renderKanjiQuizSelection() {
+  var container = document.getElementById('kanjiQuizSetSelection');
+  var sets = [
+    { name: '一年生 (Ichi nensei)', emoji: '🌸', list: kanjiGrade1, desc: 'CP — ' + kanjiGrade1.length + ' kanji' },
+    { name: '二年生 (Ni nensei)', emoji: '🎋', list: kanjiGrade2, desc: 'CE1 — ' + kanjiGrade2.length + ' kanji' },
+    { name: '三年生 (San nensei)', emoji: '🏯', list: kanjiGrade3, desc: 'CE2 — ' + kanjiGrade3.length + ' kanji' }
+  ];
+  var html = '<div style="display:grid;grid-template-columns:1fr;gap:12px;">';
+  sets.forEach(function(set, idx) {
+    var selected = _kqState && _kqState.setIdx === idx;
+    html += '<div class="game-card" onclick="selectKanjiQuizSet(' + idx + ')" style="text-align:left;display:flex;align-items:center;gap:14px;padding:16px 18px;' + (selected ? 'border:2.5px solid var(--purple);background:#f8f4ff;' : '') + '">';
+    html += '<div style="font-size:2.2rem;flex-shrink:0;">' + set.emoji + '</div>';
+    html += '<div>';
+    html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.05rem;color:var(--dark);">' + set.name + '</div>';
+    html += '<div style="font-size:0.8rem;color:#999;margin-top:2px;">' + set.desc + '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectKanjiQuizSet(idx) {
+  var lists = [kanjiGrade1, kanjiGrade2, kanjiGrade3];
+  _kqState = { setIdx: idx, list: lists[idx] };
+  renderKanjiQuizSelection();
+}
+
+function startKanjiQuizGame() {
+  if (!_kqState || !_kqState.list) {
+    _kqState = { setIdx: 0, list: kanjiGrade1 };
+  }
+  var list = _kqState.list;
+  var shuffled = list.slice().sort(function() { return Math.random() - 0.5; });
+  _kqState.kanji = shuffled;
+  _kqState.current = 0;
+  _kqState.score = 0;
+  _kqState.correct = 0;
+  _kqState.total = shuffled.length;
+  _kqState.answered = false;
+
+  showScreen('kanjiQuizScreen');
+  loadKanjiQuizRound();
+}
+
+function loadKanjiQuizRound() {
+  var st = _kqState;
+  if (st.current >= st.total) {
+    kanjiQuizEnd();
+    return;
+  }
+
+  st.answered = false;
+  var kanji = st.kanji[st.current];
+
+  document.getElementById('kqCharacter').textContent = kanji.character;
+  document.getElementById('kqMeaning').textContent = kanji.meaning ? '(' + kanji.meaning + ')' : '';
+  document.getElementById('kqProgress').textContent = (st.current + 1) + '/' + st.total;
+  document.getElementById('kqScore').textContent = st.score;
+  document.getElementById('kqFeedback').textContent = '';
+  document.getElementById('kqFeedback').className = 'feedback';
+
+  // Build 3 choices: 1 correct + 2 distractors
+  var correctReading = kanji.readings[0];
+  var distractors = [];
+  var allKanji = st.list;
+  // Gather other readings as distractors
+  var otherReadings = [];
+  for (var i = 0; i < allKanji.length; i++) {
+    if (allKanji[i].character !== kanji.character) {
+      otherReadings.push(allKanji[i].readings[0]);
+    }
+  }
+  // Shuffle and pick 2
+  otherReadings.sort(function() { return Math.random() - 0.5; });
+  for (var i = 0; i < Math.min(2, otherReadings.length); i++) {
+    distractors.push(otherReadings[i]);
+  }
+
+  var choices = [correctReading].concat(distractors);
+  choices.sort(function() { return Math.random() - 0.5; });
+
+  var choicesEl = document.getElementById('kqChoices');
+  var html = '';
+  choices.forEach(function(choice) {
+    html += '<button class="btn" onclick="kanjiQuizAnswer(this, \'' + choice.replace(/'/g, "\\'") + '\')" ' +
+      'style="width:100%;text-align:center;font-size:1.3rem;padding:14px 20px;background:#fff;color:var(--dark);border:2.5px solid #e0d4f0;border-radius:14px;cursor:pointer;transition:all 0.2s;letter-spacing:2px;" ' +
+      'onmouseover="this.style.borderColor=\'var(--purple)\';this.style.background=\'#f8f4ff\'" ' +
+      'onmouseout="this.style.borderColor=\'#e0d4f0\';this.style.background=\'#fff\'">' +
+      choice + '</button>';
+  });
+  choicesEl.innerHTML = html;
+}
+
+function kanjiQuizAnswer(btn, chosen) {
+  var st = _kqState;
+  if (st.answered) return;
+  st.answered = true;
+
+  var kanji = st.kanji[st.current];
+  var correct = false;
+  for (var r = 0; r < kanji.readings.length; r++) {
+    if (chosen === kanji.readings[r]) { correct = true; break; }
+  }
+
+  // Highlight all buttons
+  var buttons = document.getElementById('kqChoices').querySelectorAll('button');
+  buttons.forEach(function(b) {
+    b.style.cursor = 'default';
+    b.onmouseover = null;
+    b.onmouseout = null;
+    var isCorrectChoice = false;
+    for (var r = 0; r < kanji.readings.length; r++) {
+      if (b.textContent.trim() === kanji.readings[r]) { isCorrectChoice = true; break; }
+    }
+    if (isCorrectChoice) {
+      b.style.background = 'rgba(6,214,160,0.15)';
+      b.style.borderColor = 'var(--green)';
+      b.style.color = 'var(--green)';
+    } else if (b === btn && !correct) {
+      b.style.background = 'rgba(255,92,92,0.12)';
+      b.style.borderColor = '#ff5c5c';
+      b.style.color = '#ff5c5c';
+    }
+  });
+
+  if (correct) {
+    document.getElementById('kqFeedback').textContent = '✓ Correct !';
+    document.getElementById('kqFeedback').className = 'feedback correct-fb';
+    st.score += 10;
+    st.correct++;
+    gamiCorrectAnswer();
+    document.getElementById('kqScore').textContent = st.score;
+  } else {
+    document.getElementById('kqFeedback').innerHTML = '✗ C\'est : <strong>' + kanji.readings[0] + '</strong>';
+    document.getElementById('kqFeedback').className = 'feedback wrong-fb';
+    gamiWrongAnswer();
+  }
+
+  setTimeout(function() {
+    st.current++;
+    loadKanjiQuizRound();
+  }, correct ? 800 : 1500);
+}
+
+function kanjiQuizEnd() {
+  var st = _kqState;
+  var accuracy = Math.round((st.correct / st.total) * 100);
+  var stars = accuracy >= 80 ? 3 : accuracy >= 60 ? 2 : 1;
+  addGameSession('KanjiQuiz', st.score, 0);
+  setGameRecord('KanjiQuiz_score', st.score);
+  showEndScreen(st.score, stars, accuracy + '% correct — ' + (accuracy >= 80 ? 'すごい！' : accuracy >= 60 ? 'がんばった！' : 'もっとがんばろう！'));
+}
+
+function kanjiQuizStop() {
+  _kqState = null;
+}
 
 // === homework.js ===
 // ============================================
@@ -15305,6 +16002,7 @@ function quitGame() {
   stopClmListening();
   stopClmChronometer();
   stopMathVoiceListening();
+  kanjiMicStop();
   if (clockState.timerInterval) clearInterval(clockState.timerInterval);
   showScreen('homeScreen');
 }
