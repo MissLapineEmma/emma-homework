@@ -3337,8 +3337,21 @@ function loadVoices() {
     // Microsoft Online / Neural voices are warm
     if (name.indexOf('online') !== -1 || name.indexOf('neural') !== -1) score += 25;
     if (name.indexOf('microsoft') !== -1) score += 15;
-    // Female voices tend to sound warmer for a kids' app
-    if (name.indexOf('denise') !== -1 || name.indexOf('hortense') !== -1 || name.indexOf('caroline') !== -1 || name.indexOf('sylvie') !== -1 || name.indexOf('eloise') !== -1) score += 10;
+    // Female voices (warmer for a kids' app) — known French female voice names
+    var femaleNames = ['denise','hortense','caroline','sylvie','eloise','amelie','audrey',
+      'aurelie','marie','thomas','siri female','léa','céline','virginie','sandrine'];
+    var isFemale = false;
+    for (var f = 0; f < femaleNames.length; f++) {
+      if (name.indexOf(femaleNames[f]) !== -1) { isFemale = true; break; }
+    }
+    if (isFemale) score += 20;
+    // Penalize known male voices
+    var maleNames = ['thomas','jacques','nicolas','luc','mathieu'];
+    for (var m = 0; m < maleNames.length; m++) {
+      if (name.indexOf(maleNames[m]) !== -1) { score -= 10; break; }
+    }
+    // Apple/iOS enhanced voices
+    if (name.indexOf('enhanced') !== -1 || name.indexOf('premium') !== -1) score += 15;
     // Prefer fr-FR over fr-CA
     if (v.lang === 'fr-FR') score += 5;
     // Network/remote voices are generally better quality
@@ -11233,10 +11246,25 @@ function poemLectureInit() {
   _poemLectureUtterances = lines;
 }
 
+var _poemLecturePaused = false;
+
 function poemLectureToggle() {
-  if (_poemLectureSpeaking) {
-    poemLectureStop();
+  if (_poemLecturePaused) {
+    // Resume from pause
+    window.speechSynthesis.resume();
+    _poemLecturePaused = false;
+    _poemLectureSpeaking = true;
+    var btn = document.getElementById('poemLecturePlayBtn');
+    if (btn) btn.innerHTML = '⏸️ Pause';
+  } else if (_poemLectureSpeaking) {
+    // Pause
+    window.speechSynthesis.pause();
+    _poemLecturePaused = true;
+    _poemLectureSpeaking = false;
+    var btn = document.getElementById('poemLecturePlayBtn');
+    if (btn) btn.innerHTML = '▶️ Reprendre';
   } else {
+    // Start from beginning
     poemLecturePlay();
   }
 }
@@ -11246,6 +11274,7 @@ function poemLecturePlay() {
   if (!lines || lines.length === 0) return;
   window.speechSynthesis.cancel();
   _poemLectureSpeaking = true;
+  _poemLecturePaused = false;
   var btn = document.getElementById('poemLecturePlayBtn');
   if (btn) btn.innerHTML = '⏸️ Pause';
 
@@ -11257,7 +11286,7 @@ function poemLecturePlay() {
   function speakNext() {
     // Skip empty lines
     while (lineIdx < lines.length && lines[lineIdx].trim() === '') { lineIdx++; }
-    if (lineIdx >= lines.length || !_poemLectureSpeaking) {
+    if (lineIdx >= lines.length || (!_poemLectureSpeaking && !_poemLecturePaused)) {
       poemLectureStop();
       return;
     }
@@ -11266,7 +11295,7 @@ function poemLecturePlay() {
 
     var utterance = new SpeechSynthesisUtterance(lines[lineIdx]);
     utterance.lang = 'fr-FR';
-    utterance.rate = 0.9;
+    utterance.rate = 0.85;
     if (typeof bestFrenchVoice !== 'undefined' && bestFrenchVoice) {
       utterance.voice = bestFrenchVoice;
     }
@@ -11285,6 +11314,7 @@ function poemLecturePlay() {
 function poemLectureStop() {
   window.speechSynthesis.cancel();
   _poemLectureSpeaking = false;
+  _poemLecturePaused = false;
   _poemLectureCurrentVerse = -1;
   poemLectureClearHighlights();
   var btn = document.getElementById('poemLecturePlayBtn');
