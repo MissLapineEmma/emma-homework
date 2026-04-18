@@ -10569,7 +10569,8 @@ function startPoemGameWithIdx(idx) {
     { type: 'scramble', label: 'Vers mélangé', desc: 'Remets les mots en ordre', scene: 3 },
     { type: 'blind', label: 'Mission sans regarder', desc: 'Rappelle-toi de mémoire', scene: 4 },
     { type: 'revision', label: 'Coffre de révision', desc: 'Révise et maîtrise chaque vers', scene: 5 },
-    { type: 'imageorder', label: 'Images en ordre', desc: 'Replace les scènes dans l\'ordre', scene: 6 }
+    { type: 'imageorder', label: 'Images en ordre', desc: 'Replace les scènes dans l\'ordre', scene: 6 },
+    { type: 'recitation', label: 'Récitation', desc: 'Récite le poème à voix haute', scene: 7 }
   ];
   var cardsHtml = '';
   hubCards.forEach(function(card) {
@@ -11164,6 +11165,7 @@ function quitPoemGame() {
   if (poemRecording) stopPoemRecording();
   window.speechSynthesis.cancel();
   _poemLectureSpeaking = false;
+  poemRecitationStop();
   showScreen('poemHubScreen');
 }
 
@@ -11526,6 +11528,292 @@ function poemLectureClearHighlights() {
   });
 }
 
+/* ===========================
+   RÉCITATION MINI-GAME
+   =========================== */
+var _recitState = null;
+var _recitRecognition = null;
+
+function normalizeWord(w) {
+  return w.toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/[.,!?;:…«»""()\-–—]/g, '')
+    .replace(/[éèêë]/g, 'e')
+    .replace(/[àâä]/g, 'a')
+    .replace(/[ùûü]/g, 'u')
+    .replace(/[ôö]/g, 'o')
+    .replace(/[îï]/g, 'i')
+    .replace(/[ç]/g, 'c')
+    .replace(/[œ]/g, 'oe')
+    .trim();
+}
+
+function poemRecitationInit() {
+  var poems = getPoems();
+  if (selectedPoemIdx < 0 || !poems[selectedPoemIdx]) { alert('Sélectionne un poème'); return; }
+  var poem = poems[selectedPoemIdx];
+  var text = getSelectedPoemText();
+  var lines = text.split('\n');
+
+  // Build word list with line structure
+  var allWords = [];
+  var lineMap = []; // lineMap[i] = { lineIdx, text, words: [{text, normalized, status}] }
+  lines.forEach(function(line, li) {
+    if (line.trim() === '') {
+      lineMap.push({ lineIdx: li, text: '', words: [] });
+      return;
+    }
+    var words = line.split(/\s+/).filter(function(w) { return w.length > 0; });
+    var wordObjs = words.map(function(w) {
+      return { text: w, normalized: normalizeWord(w), status: 'pending', globalIdx: allWords.length };
+    });
+    wordObjs.forEach(function(wo) { allWords.push(wo); });
+    lineMap.push({ lineIdx: li, text: line, words: wordObjs });
+  });
+
+  _recitState = {
+    poem: poem,
+    lines: lineMap,
+    allWords: allWords,
+    currentWordIdx: 0,
+    correctCount: 0,
+    wrongCount: 0,
+    listening: false,
+    done: false,
+    startTime: Date.now()
+  };
+
+  showScreen('poemGameScreen');
+  document.getElementById('poemGameTitle').textContent = '';
+  document.getElementById('poemGameAuthor').textContent = '';
+  document.getElementById('poemDayBar').innerHTML = '';
+  document.getElementById('poemPhaseBar').innerHTML = '';
+  document.getElementById('poemGameActions').innerHTML = '';
+
+  poemRecitationRender();
+}
+
+function poemRecitationRender() {
+  var st = _recitState;
+  var content = document.getElementById('poemGameContent');
+  var actions = document.getElementById('poemGameActions');
+
+  var html = '<div style="text-align:center;margin-bottom:8px;">';
+  html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.2rem;color:var(--purple);">' + st.poem.title + '</div>';
+  html += '<div style="font-size:0.8rem;color:#999;">par ' + (st.poem.author || 'Anonyme') + '</div>';
+  html += '</div>';
+
+  // Progress bar
+  var total = st.allWords.length;
+  var done = st.correctCount + st.wrongCount;
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  html += '<div style="background:#eee;border-radius:8px;height:6px;margin-bottom:12px;overflow:hidden;">';
+  html += '<div style="height:100%;border-radius:8px;width:' + pct + '%;background:linear-gradient(90deg,var(--green),var(--blue));transition:width 0.3s;"></div>';
+  html += '</div>';
+
+  // Score display
+  html += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:0.85rem;">';
+  html += '<span style="color:var(--green);font-weight:700;">✓ ' + st.correctCount + '</span>';
+  html += '<span style="color:#ff5c5c;font-weight:700;">✗ ' + st.wrongCount + '</span>';
+  html += '<span style="color:#999;">' + done + '/' + total + '</span>';
+  html += '</div>';
+
+  // Poem text with colored words
+  html += '<div style="background:#fff;border-radius:18px;padding:16px 14px;box-shadow:0 3px 14px rgba(0,0,0,0.06);line-height:2;font-size:1.05rem;text-align:left;max-height:45vh;overflow-y:auto;">';
+  st.lines.forEach(function(line) {
+    if (line.words.length === 0) {
+      html += '<div style="height:10px;"></div>';
+      return;
+    }
+    html += '<div style="margin-bottom:4px;">';
+    line.words.forEach(function(w) {
+      var color = '#ddd'; var textColor = '#bbb'; var fontWeight = '600';
+      if (w.status === 'correct') { color = 'rgba(6,214,160,0.15)'; textColor = 'var(--green)'; fontWeight = '800'; }
+      else if (w.status === 'wrong') { color = 'rgba(255,92,92,0.15)'; textColor = '#ff5c5c'; fontWeight = '800'; }
+      else if (w.globalIdx === st.currentWordIdx) { color = 'rgba(155,93,229,0.15)'; textColor = 'var(--purple)'; fontWeight = '800'; }
+      else if (w.status === 'pending') { color = 'transparent'; textColor = '#ccc'; }
+      html += '<span style="display:inline-block;padding:1px 5px;margin:1px 2px;border-radius:6px;background:' + color + ';color:' + textColor + ';font-weight:' + fontWeight + ';transition:all 0.3s;">' + w.text + '</span>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Mic status
+  html += '<div style="text-align:center;margin-top:12px;">';
+  html += '<div id="recitMicStatus" style="font-size:1.8rem;opacity:' + (st.listening ? '1' : '0.3') + ';transition:opacity 0.3s;">' + (st.listening ? '🎤' : '🎤') + '</div>';
+  html += '<div id="recitHeard" style="font-size:0.8rem;color:#999;margin-top:4px;min-height:20px;"></div>';
+  html += '</div>';
+
+  content.innerHTML = html;
+
+  // Actions
+  if (st.done) {
+    var elapsed = Math.round((Date.now() - st.startTime) / 1000);
+    var pctCorrect = total > 0 ? Math.round(st.correctCount / total * 100) : 0;
+    var stars = pctCorrect >= 90 ? 3 : pctCorrect >= 60 ? 2 : 1;
+    var starsHtml = '';
+    for (var s = 0; s < 3; s++) starsHtml += '<span style="font-size:2rem;">' + (s < stars ? '⭐' : '☆') + '</span>';
+    actions.innerHTML = '<div style="text-align:center;margin-top:10px;">' +
+      '<div style="font-size:1.1rem;font-weight:800;color:var(--purple);margin-bottom:6px;">' + pctCorrect + '% correct !</div>' +
+      starsHtml +
+      '<div style="font-size:0.8rem;color:#999;margin-top:6px;">en ' + elapsed + 's</div>' +
+      '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px;">' +
+      '<button class="btn btn-primary" onclick="poemRecitationInit()">🔄 Recommencer</button>' +
+      '<button class="btn btn-outline" onclick="poemRecitationStop();showScreen(\'poemHubScreen\')">← Retour</button>' +
+      '</div></div>';
+    addGameSession('PoemRecitation', Math.round(pctCorrect), elapsed);
+  } else {
+    actions.innerHTML = '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">' +
+      '<button class="btn ' + (st.listening ? 'btn-danger' : 'btn-primary') + '" onclick="poemRecitationToggleMic()" style="font-size:1rem;padding:10px 24px;">' +
+      (st.listening ? '⏹️ Arrêter' : '🎤 Commencer à réciter') + '</button>' +
+      '<button class="btn btn-outline" onclick="poemRecitationStop();showScreen(\'poemHubScreen\')" style="font-size:0.9rem;padding:8px 18px;">← Retour</button>' +
+      '</div>';
+  }
+}
+
+function poemRecitationToggleMic() {
+  var st = _recitState;
+  if (!st) return;
+  if (st.listening) {
+    poemRecitationStopListening();
+  } else {
+    poemRecitationStartListening();
+  }
+}
+
+function poemRecitationStartListening() {
+  var st = _recitState;
+  if (!st || st.done) return;
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('La reconnaissance vocale n\'est pas supportée sur ce navigateur.');
+    return;
+  }
+
+  ensureMicPermission();
+
+  var SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  _recitRecognition = new SpeechRecognitionAPI();
+  _recitRecognition.lang = 'fr-FR';
+  _recitRecognition.continuous = true;
+  _recitRecognition.interimResults = true;
+  _recitRecognition.maxAlternatives = 3;
+
+  var lastProcessedLen = 0;
+
+  _recitRecognition.onresult = function(event) {
+    var finalWords = [];
+    var interimText = '';
+    for (var i = 0; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        // Gather all alternative transcripts for better matching
+        var bestTranscript = event.results[i][0].transcript;
+        var words = bestTranscript.trim().split(/\s+/);
+        finalWords = finalWords.concat(words);
+      } else {
+        interimText += event.results[i][0].transcript;
+      }
+    }
+
+    // Show what's being heard
+    var heardEl = document.getElementById('recitHeard');
+    if (heardEl) heardEl.textContent = interimText || '';
+
+    // Process new final words
+    if (finalWords.length > lastProcessedLen) {
+      var newWords = finalWords.slice(lastProcessedLen);
+      lastProcessedLen = finalWords.length;
+      poemRecitationProcessWords(newWords);
+    }
+  };
+
+  _recitRecognition.onerror = function(e) {
+    if (e.error === 'no-speech') return; // ignore
+    if (e.error !== 'aborted') console.log('Recitation recognition error:', e.error);
+  };
+
+  _recitRecognition.onend = function() {
+    // Auto-restart if still listening and not done
+    if (st.listening && !st.done) {
+      lastProcessedLen = 0;
+      try { _recitRecognition.start(); } catch(e) {}
+    }
+  };
+
+  try {
+    _recitRecognition.start();
+    st.listening = true;
+    poemRecitationRender();
+  } catch(e) {
+    console.log('Could not start recognition:', e);
+  }
+}
+
+function poemRecitationStopListening() {
+  var st = _recitState;
+  if (st) st.listening = false;
+  if (_recitRecognition) {
+    try { _recitRecognition.stop(); } catch(e) {}
+    _recitRecognition = null;
+  }
+  poemRecitationRender();
+}
+
+function poemRecitationProcessWords(spokenWords) {
+  var st = _recitState;
+  if (!st || st.done) return;
+
+  spokenWords.forEach(function(spoken) {
+    if (st.currentWordIdx >= st.allWords.length) return;
+    var normSpoken = normalizeWord(spoken);
+    if (normSpoken === '') return;
+
+    var expected = st.allWords[st.currentWordIdx];
+    // Try matching current word, or allow skipping small words (le, la, de, etc.)
+    if (normSpoken === expected.normalized) {
+      expected.status = 'correct';
+      st.correctCount++;
+      st.currentWordIdx++;
+    } else {
+      // Check if it matches next word (kid skipped one)
+      var matchedAhead = false;
+      for (var lookahead = 1; lookahead <= 2 && st.currentWordIdx + lookahead < st.allWords.length; lookahead++) {
+        if (normSpoken === st.allWords[st.currentWordIdx + lookahead].normalized) {
+          // Mark skipped words as wrong
+          for (var s = 0; s < lookahead; s++) {
+            st.allWords[st.currentWordIdx + s].status = 'wrong';
+            st.wrongCount++;
+          }
+          st.allWords[st.currentWordIdx + lookahead].status = 'correct';
+          st.correctCount++;
+          st.currentWordIdx += lookahead + 1;
+          matchedAhead = true;
+          break;
+        }
+      }
+      if (!matchedAhead) {
+        // Mark as wrong and move on
+        expected.status = 'wrong';
+        st.wrongCount++;
+        st.currentWordIdx++;
+      }
+    }
+  });
+
+  // Check if done
+  if (st.currentWordIdx >= st.allWords.length) {
+    st.done = true;
+    poemRecitationStopListening();
+  }
+
+  poemRecitationRender();
+}
+
+function poemRecitationStop() {
+  poemRecitationStopListening();
+  _recitState = null;
+}
+
 function startPoemMiniGame(type) {
   var poems = getPoems();
   if (selectedPoemIdx < 0 || !poems[selectedPoemIdx]) {
@@ -11540,6 +11828,11 @@ function startPoemMiniGame(type) {
 
   if (type === 'lecture') {
     poemLectureInit();
+    return;
+  }
+
+  if (type === 'recitation') {
+    poemRecitationInit();
     return;
   }
 
@@ -11589,7 +11882,7 @@ function poemMiniGameEnd() {
   var maxScore = st.totalRounds * 10;
   var pct = maxScore > 0 ? Math.round(st.score / maxScore * 100) : 0;
   var stars = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
-  var typeNames = { fillblanks: 'PoemTrous', repeat: 'PoemRepete', scramble: 'PoemMelange', blind: 'PoemBlind', revision: 'PoemRevision' };
+  var typeNames = { fillblanks: 'PoemTrous', repeat: 'PoemRepete', scramble: 'PoemMelange', blind: 'PoemBlind', revision: 'PoemRevision', recitation: 'PoemRecitation' };
   var gameName = typeNames[st.type] || 'PoemMini';
   addGameSession(gameName, st.score, elapsed);
   var msgs = {
