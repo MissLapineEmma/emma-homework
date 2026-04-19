@@ -8326,9 +8326,14 @@ function imgTestRender() {
 
   grid.innerHTML = html;
 
-  // Score display
+  // Score display — note sur 20
   var scoreEl = document.getElementById('imgTestScore');
-  if (scoreEl) scoreEl.textContent = 'Score : ' + imgTestState.score + ' points';
+  if (scoreEl) {
+    var total = items.length;
+    var note20 = total > 0 ? Math.round(imgTestState.score / total * 20 * 10) / 10 : 0;
+    note20 = Math.max(0, Math.min(20, note20));
+    scoreEl.textContent = 'Note : ' + note20 + ' / 20';
+  }
 
   // Actions
   var actionsEl = document.getElementById('imgTestActions');
@@ -8355,7 +8360,8 @@ function imgTestHint(idx) {
 function imgTestReveal(idx) {
   var key = 'img_' + idx;
   imgTestState.revealed[key] = true;
-  // 0 points for revealed
+  // Lose a point for revealing
+  imgTestState.score = Math.max(0, imgTestState.score - 1);
   imgTestRender();
 }
 
@@ -8374,11 +8380,12 @@ function imgTestValidate() {
 
     if (answer === target || answerNoArticle === targetNoArticle) {
       imgTestState.validated[key] = true;
-      // Score: 3 if no hint/reveal, 1 if hinted
+      // 1 point per correct answer (maps to /20 at display)
+      // Half point if hinted
       if (imgTestState.hinted[key]) {
-        imgTestState.score += 1;
+        imgTestState.score += 0.5;
       } else {
-        imgTestState.score += 3;
+        imgTestState.score += 1;
       }
       gamiCorrectAnswer();
     } else if (answer.length > 0) {
@@ -8406,9 +8413,16 @@ function imgTestFinish() {
   imgTestState.items.forEach(function(_, i) {
     if (imgTestState.validated['img_' + i] === true) correct++;
   });
-  var stars = correct === total ? 3 : correct >= total * 0.7 ? 2 : 1;
-  addGameSession('ImgTest', imgTestState.score, 0);
-  showEndScreen(imgTestState.score, stars, correct + '/' + total + ' mots trouvés !');
+  var note20 = total > 0 ? Math.round(imgTestState.score / total * 20 * 10) / 10 : 0;
+  note20 = Math.max(0, Math.min(20, note20));
+  var stars = note20 >= 16 ? 3 : note20 >= 10 ? 2 : 1;
+  addGameSession('ImgTest', Math.round(note20), 0);
+  var msg = correct + '/' + total + ' mots trouvés !';
+  if (note20 >= 18) msg = 'Excellent ! ' + msg;
+  else if (note20 >= 14) msg = 'Très bien ! ' + msg;
+  else if (note20 >= 10) msg = 'Pas mal ! ' + msg;
+  else msg = 'Continue à réviser ! ' + msg;
+  showEndScreen(note20 + '/20', stars, msg);
 }
 
 // ---- GAME 5: REVERSE QUIZ (show word, pick from 3 photos) ----
