@@ -2107,6 +2107,16 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
         <div class="card-title">Kanji Quiz</div>
         <div class="card-desc">Choisis la bonne lecture</div>
       </div>
+      <div class="game-card" onclick="jlptShowLevelSelect()">
+        <div class="card-icon">📝</div>
+        <div class="card-title">JLPT Practice</div>
+        <div class="card-desc">Exercices style JLPT</div>
+      </div>
+      <div class="game-card" onclick="jlptShowStudyList()">
+        <div class="card-icon">📖</div>
+        <div class="card-title">Liste d'étude</div>
+        <div class="card-desc">Tous les kanji par niveau</div>
+      </div>
     </div>
   </div>
 
@@ -2783,6 +2793,74 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
     <div id="kqChoices" style="display:flex;flex-direction:column;gap:10px;margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto;"></div>
 
     <div class="feedback" id="kqFeedback" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- ===========================
+       JLPT LEVEL SELECT SCREEN
+       =========================== -->
+  <div class="screen" id="jlptLevelScreen">
+    <div class="back-link" onclick="showScreen('japonaisScreen')">← Retour</div>
+    <div class="logo">📝 JLPT Practice</div>
+    <p class="subtitle">Choisis ton niveau</p>
+    <div id="jlptLevelCards" style="display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px;"></div>
+  </div>
+
+  <!-- ===========================
+       JLPT HUB SCREEN (exercise types)
+       =========================== -->
+  <div class="screen" id="jlptHubScreen">
+    <div class="back-link" onclick="showScreen('jlptLevelScreen')">← Retour</div>
+    <div id="jlptHubTitle" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--purple);text-align:center;"></div>
+    <div id="jlptHubStats" style="text-align:center;font-size:0.8rem;color:#999;margin:4px 0 14px;"></div>
+    <div id="jlptHubCards" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+  </div>
+
+  <!-- ===========================
+       JLPT GAME SCREEN (all exercises)
+       =========================== -->
+  <div class="screen" id="jlptGameScreen">
+    <div class="quit-bar">
+      <button class="quit-btn" onclick="jlptQuit()">✕ Quitter</button>
+    </div>
+    <div class="hud">
+      <div class="score-box">
+        <div class="label">Score</div>
+        <div class="value" id="jlptScore">0</div>
+      </div>
+      <div class="progress-box">
+        <div class="label">Question</div>
+        <div class="value" id="jlptProgress">1/10</div>
+      </div>
+    </div>
+    <div id="jlptGameContent" style="margin-top:12px;"></div>
+    <div id="jlptGameFeedback" class="feedback" style="margin-top:10px;min-height:24px;"></div>
+  </div>
+
+  <!-- ===========================
+       JLPT STUDY LIST SCREEN
+       =========================== -->
+  <div class="screen" id="jlptStudyScreen">
+    <div class="back-link" onclick="showScreen('japonaisScreen')">← Retour</div>
+    <div class="logo">📖 Liste d'étude</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">
+      <button class="btn btn-sm" id="jlptStudyN5Btn" onclick="jlptStudyRender('N5')" style="font-size:0.85rem;">N5</button>
+      <button class="btn btn-sm" id="jlptStudyN4Btn" onclick="jlptStudyRender('N4')" style="font-size:0.85rem;">N4</button>
+      <button class="btn btn-sm" id="jlptStudyN3Btn" onclick="jlptStudyRender('N3')" style="font-size:0.85rem;">N3</button>
+    </div>
+    <div id="jlptStudyContent" style="max-height:65vh;overflow-y:auto;"></div>
+  </div>
+
+  <!-- ===========================
+       JLPT TEST RESULT SCREEN
+       =========================== -->
+  <div class="screen" id="jlptTestResultScreen">
+    <div class="logo">📝 Résultat du test</div>
+    <div id="jlptTestResultContent" style="text-align:center;margin:20px 0;"></div>
+    <div id="jlptTestReview" style="text-align:left;max-height:50vh;overflow-y:auto;"></div>
+    <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="jlptShowHub()">🔄 Continuer</button>
+      <button class="btn btn-outline" onclick="showScreen('japonaisScreen')">← Japonais</button>
+    </div>
   </div>
 
   <!-- ===========================
@@ -14811,6 +14889,1112 @@ function kanjiQuizStop() {
   _kqState = null;
 }
 
+/* ============================================================
+   JLPT KANJI PRACTICE SYSTEM
+   ============================================================ */
+
+// --- JLPT DATA ---
+// Format: [kanji, hiragana, english, french, example, exReading, exTranslation, tags, confusionGroup]
+var JLPT_N5_DATA = [
+  ['一','いち/ひと','one','un','一つください。','ひとつください。','Un, s\'il vous plait.','number','一二三'],
+  ['二','に/ふた','two','deux','二人で行きます。','ふたりでいきます。','Nous y allons a deux.','number','一二三'],
+  ['三','さん/み','three','trois','三月は春です。','さんがつははるです。','Mars, c\'est le printemps.','number','一二三'],
+  ['四','し/よん/よ','four','quatre','四時に会いましょう。','よじにあいましょう。','Retrouvons-nous a quatre heures.','number','四西'],
+  ['五','ご/いつ','five','cinq','五つのりんごがあります。','いつつのりんごがあります。','Il y a cinq pommes.','number','五午'],
+  ['六','ろく/む','six','six','六月は雨が多いです。','ろくがつはあめがおおいです。','Il pleut beaucoup en juin.','number','六'],
+  ['七','しち/なな','seven','sept','七時に起きます。','しちじにおきます。','Je me leve a sept heures.','number','七'],
+  ['八','はち/や','eight','huit','八百円です。','はっぴゃくえんです。','C\'est huit cents yens.','number','八六'],
+  ['九','きゅう/く/ここの','nine','neuf','九月に日本へ行きます。','くがつににほんへいきます。','Je vais au Japon en septembre.','number','九'],
+  ['十','じゅう/とお','ten','dix','十分待ってください。','じゅっぷんまってください。','Attendez dix minutes, s\'il vous plait.','number','十'],
+  ['百','ひゃく','hundred','cent','百円ショップで買いました。','ひゃくえんしょっぷでかいました。','Je l\'ai achete au magasin a cent yens.','number','百白'],
+  ['千','せん/ち','thousand','mille','千円札がありますか。','せんえんさつがありますか。','Avez-vous un billet de mille yens ?','number','千十'],
+  ['万','まん/ばん','ten thousand','dix mille','一万円かかりました。','いちまんえんかかりました。','Cela a coute dix mille yens.','money','万方'],
+  ['日','にち/じつ/ひ/か','day/sun','jour/soleil','今日は月曜日です。','きょうはげつようびです。','Aujourd\'hui c\'est lundi.','time','日月'],
+  ['月','げつ/がつ/つき','month/moon','mois/lune','月がきれいですね。','つきがきれいですね。','La lune est belle, n\'est-ce pas ?','time','日月'],
+  ['火','か/ひ','fire/Tuesday','feu/mardi','火曜日にテストがあります。','かようびにてすとがあります。','Il y a un examen mardi.','nature','火水'],
+  ['水','すい/みず','water/Wednesday','eau/mercredi','水を飲みたいです。','みずをのみたいです。','Je veux boire de l\'eau.','nature','火水'],
+  ['木','もく/き/こ','tree/Thursday','arbre/jeudi','木の下で休みました。','きのしたでやすみました。','Je me suis repose sous l\'arbre.','nature','木本'],
+  ['金','きん/かね/かな','gold/money/Friday','or/argent/vendredi','お金がありません。','おかねがありません。','Je n\'ai pas d\'argent.','money','金全'],
+  ['土','ど/つち','earth/Saturday','terre/samedi','土曜日は休みです。','どようびはやすみです。','Samedi est un jour de repos.','nature','土上'],
+  ['人','じん/にん/ひと','person','personne','あの人は誰ですか。','あのひとはだれですか。','Qui est cette personne ?','people','人入'],
+  ['子','し/こ','child','enfant','子どもが三人います。','こどもがさんにんいます。','J\'ai trois enfants.','people','子学'],
+  ['女','じょ/おんな/め','woman','femme','女の子が歩いています。','おんなのこがあるいています。','Une fille marche.','people','女男'],
+  ['男','だん/なん/おとこ','man','homme','男の人が来ました。','おとこのひとがきました。','Un homme est venu.','people','女男'],
+  ['父','ふ/ちち','father','pere','父は会社員です。','ちちはかいしゃいんです。','Mon pere est employe de bureau.','family','父母'],
+  ['母','ぼ/はは','mother','mere','母は料理が上手です。','はははりょうりがじょうずです。','Ma mere est douee en cuisine.','family','父母'],
+  ['友','ゆう/とも','friend','ami','友だちと映画を見ました。','ともだちとえいがをみました。','J\'ai regarde un film avec un ami.','people','友'],
+  ['先','せん/さき','previous/ahead','precedent/devant','先生、おはようございます。','せんせい、おはようございます。','Bonjour, professeur.','school','先生'],
+  ['生','せい/しょう/い/う/なま','life/birth','vie/naissance','学生は二十人います。','がくせいはにじゅうにんいます。','Il y a vingt etudiants.','school','先生'],
+  ['学','がく/まな','study/learn','etude/apprendre','大学で日本語を学びます。','だいがくでにほんごをまなびます。','J\'etudie le japonais a l\'universite.','school','学字'],
+  ['校','こう','school','ecole','学校は九時に始まります。','がっこうはくじにはじまります。','L\'ecole commence a neuf heures.','school','校'],
+  ['大','だい/たい/おお','big/large','grand','大きい犬がいます。','おおきいいぬがいます。','Il y a un gros chien.','size','大小'],
+  ['小','しょう/ちい/こ/お','small/little','petit','小さい猫が好きです。','ちいさいねこがすきです。','J\'aime les petits chats.','size','大小'],
+  ['中','ちゅう/なか','middle/inside','milieu/interieur','かばんの中に本があります。','かばんのなかにほんがあります。','Il y a un livre dans le sac.','size','中'],
+  ['上','じょう/うえ/あ/のぼ','up/above','haut/dessus','机の上に花があります。','つくえのうえにはながあります。','Il y a des fleurs sur le bureau.','position','上下'],
+  ['下','か/げ/した/さ/くだ/お','down/below','bas/dessous','木の下に猫がいます。','きのしたにねこがいます。','Il y a un chat sous l\'arbre.','position','上下'],
+  ['左','さ/ひだり','left','gauche','左に曲がってください。','ひだりにまがってください。','Tournez a gauche, s\'il vous plait.','position','左右'],
+  ['右','う/ゆう/みぎ','right','droite','右の道を行きます。','みぎのみちをいきます。','Je prends le chemin de droite.','position','左右'],
+  ['前','ぜん/まえ','before/front','avant/devant','駅の前にコンビニがあります。','えきのまえにこんびにがあります。','Il y a un konbini devant la gare.','position','前後'],
+  ['後','ご/こう/あと/うし','after/behind','apres/derriere','後で電話します。','あとででんわします。','Je telephonerai plus tard.','position','前後'],
+  ['北','ほく/きた','north','nord','北海道は寒いです。','ほっかいどうはさむいです。','Hokkaido est froid.','direction','北'],
+  ['南','なん/みなみ','south','sud','南の島に行きたいです。','みなみのしまにいきたいです。','Je veux aller sur une ile du sud.','direction','南'],
+  ['東','とう/ひがし','east','est','東京は大きい町です。','とうきょうはおおきいまちです。','Tokyo est une grande ville.','direction','東'],
+  ['西','せい/さい/にし','west','ouest','西口で待ってください。','にしぐちでまってください。','Attendez a la sortie ouest.','direction','西四'],
+  ['外','がい/げ/そと/はず','outside','exterieur/dehors','外は寒いです。','そとはさむいです。','Il fait froid dehors.','direction','外中'],
+  ['国','こく/くに','country','pays','どの国から来ましたか。','どのくにからきましたか。','De quel pays venez-vous ?','direction','国'],
+  ['山','さん/やま','mountain','montagne','山に登りましょう。','やまにのぼりましょう。','Escaladons la montagne.','nature','山'],
+  ['川','せん/かわ','river','riviere','川で魚を見ました。','かわでさかなをみました。','J\'ai vu des poissons dans la riviere.','nature','川'],
+  ['田','でん/た','rice field','riziere','田中さんは先生です。','たなかさんはせんせいです。','Monsieur Tanaka est professeur.','nature','田'],
+  ['天','てん/あめ/あま','heaven/sky','ciel','天気がいいですね。','てんきがいいですね。','Il fait beau, n\'est-ce pas ?','nature','天気'],
+  ['気','き/け','spirit/air','esprit/air','元気ですか。','げんきですか。','Comment allez-vous ?','nature','天気'],
+  ['雨','う/あめ/あま','rain','pluie','雨が降っています。','あめがふっています。','Il pleut.','nature','雨'],
+  ['花','か/はな','flower','fleur','花がきれいですね。','はながきれいですね。','Les fleurs sont belles, n\'est-ce pas ?','nature','花'],
+  ['本','ほん/もと','book/origin','livre/origine','本を三冊買いました。','ほんをさんさつかいました。','J\'ai achete trois livres.','object','本木'],
+  ['車','しゃ/くるま','car/vehicle','voiture/vehicule','車で会社に行きます。','くるまでかいしゃにいきます。','Je vais au bureau en voiture.','transport','車電'],
+  ['電','でん','electricity','electricite','電車で学校に行きます。','でんしゃでがっこうにいきます。','Je vais a l\'ecole en train.','transport','車電'],
+  ['円','えん/まる','yen/circle','yen/cercle','五百円のお弁当を買いました。','ごひゃくえんのおべんとうをかいました。','J\'ai achete un bento a cinq cents yens.','money','円'],
+  ['白','はく/びゃく/しろ/しら','white','blanc','白い猫が好きです。','しろいねこがすきです。','J\'aime les chats blancs.','color','白百'],
+  ['目','もく/め/ま','eye','oeil','目が大きいですね。','めがおおきいですね。','Vous avez de grands yeux.','body','目耳口'],
+  ['口','こう/く/くち','mouth','bouche','口を開けてください。','くちをあけてください。','Ouvrez la bouche, s\'il vous plait.','body','目耳口'],
+  ['耳','じ/みみ','ear','oreille','耳が痛いです。','みみがいたいです。','J\'ai mal a l\'oreille.','body','目耳口'],
+  ['手','しゅ/て/た','hand','main','手を洗ってください。','てをあらってください。','Lavez-vous les mains, s\'il vous plait.','body','手足'],
+  ['足','そく/あし/た','foot/leg','pied/jambe','足が速いですね。','あしがはやいですね。','Vous courez vite.','body','手足'],
+  ['見','けん/み','see/look','voir/regarder','映画を見ましょう。','えいがをみましょう。','Regardons un film.','action','見'],
+  ['聞','ぶん/もん/き','hear/listen/ask','entendre/ecouter','音楽を聞きます。','おんがくをききます。','J\'ecoute de la musique.','action','聞'],
+  ['食','しょく/た','eat','manger','朝ごはんを食べましたか。','あさごはんをたべましたか。','Avez-vous pris le petit-dejeuner ?','action','食飲'],
+  ['飲','いん/の','drink','boire','お茶を飲みませんか。','おちゃをのみませんか。','Voulez-vous boire du the ?','action','食飲'],
+  ['読','どく/とく/よ','read','lire','毎日新聞を読みます。','まいにちしんぶんをよみます。','Je lis le journal tous les jours.','action','読書'],
+  ['書','しょ/か','write','ecrire','手紙を書きました。','てがみをかきました。','J\'ai ecrit une lettre.','action','読書'],
+  ['話','わ/はな/はなし','speak/talk','parler','日本語を話しますか。','にほんごをはなしますか。','Parlez-vous japonais ?','action','話語言'],
+  ['語','ご/かた','language/word','langue/mot','英語が少し分かります。','えいごがすこしわかります。','Je comprends un peu l\'anglais.','action','話語言'],
+  ['言','げん/ごん/い/こと','say/word','dire/mot','何も言いませんでした。','なにもいいませんでした。','Il n\'a rien dit.','action','話語言'],
+  ['行','こう/ぎょう/い/ゆ','go','aller','学校に行きます。','がっこうにいきます。','Je vais a l\'ecole.','action','行来'],
+  ['来','らい/く/き/こ','come','venir','日本に来て三年です。','にほんにきてさんねんです。','Cela fait trois ans que je suis venu au Japon.','action','行来'],
+  ['出','しゅつ/で/だ','go out/exit','sortir','七時に家を出ます。','しちじにいえをでます。','Je quitte la maison a sept heures.','action','出入'],
+  ['入','にゅう/い/はい','enter/put in','entrer/mettre','部屋に入ってください。','へやにはいってください。','Entrez dans la chambre, s\'il vous plait.','action','出入人'],
+  ['立','りつ/た','stand','se lever/etre debout','ここに立ってください。','ここにたってください。','Tenez-vous debout ici, s\'il vous plait.','action','立'],
+  ['休','きゅう/やす','rest/holiday','repos/vacances','日曜日は休みです。','にちようびはやすみです。','Dimanche est un jour de repos.','action','休体'],
+  ['買','ばい/か','buy','acheter','新しい靴を買いました。','あたらしいくつをかいました。','J\'ai achete de nouvelles chaussures.','action','買売'],
+  ['年','ねん/とし','year','an/annee','今年は二千二十六年です。','ことしはにせんにじゅうろくねんです。','Cette annee, c\'est l\'an 2026.','time','年'],
+  ['時','じ/とき','time/hour','temps/heure','何時に起きますか。','なんじにおきますか。','A quelle heure vous levez-vous ?','time','時間'],
+  ['分','ぶん/ふん/ぷん/わ','minute/understand','minute/comprendre','十五分かかります。','じゅうごふんかかります。','Cela prend quinze minutes.','time','分半'],
+  ['半','はん/なか','half','demi/moitie','三時半に会いましょう。','さんじはんにあいましょう。','Retrouvons-nous a trois heures et demie.','time','分半'],
+  ['間','かん/けん/あいだ/ま','interval/between','intervalle/entre','一時間待ちました。','いちじかんまちました。','J\'ai attendu une heure.','time','時間'],
+  ['毎','まい','every','chaque','毎朝六時に起きます。','まいあさろくじにおきます。','Je me leve a six heures chaque matin.','time','毎'],
+  ['長','ちょう/なが','long','long','この道は長いです。','このみちはながいです。','Cette route est longue.','adj','長'],
+  ['名','めい/みょう/な','name','nom','お名前は何ですか。','おなまえはなんですか。','Quel est votre nom ?','people','名'],
+  ['何','か/なに/なん','what','quoi/quel','何を食べますか。','なにをたべますか。','Que mangez-vous ?','people','何'],
+  ['高','こう/たか','high/expensive','haut/cher','この店は高いです。','このみせはたかいです。','Ce magasin est cher.','adj','高安'],
+  ['安','あん/やす','cheap/safe','bon marche/sur','この本は安いです。','このほんはやすいです。','Ce livre est bon marche.','adj','高安'],
+  ['新','しん/あたら/あら/にい','new','nouveau','新しい車を買いたいです。','あたらしいくるまをかいたいです。','Je veux acheter une nouvelle voiture.','adj','新古'],
+  ['古','こ/ふる','old','vieux/ancien','この寺は古いです。','このてらはふるいです。','Ce temple est ancien.','adj','新古'],
+  ['多','た/おお','many/much','beaucoup','人が多いですね。','ひとがおおいですね。','Il y a beaucoup de monde.','adj','多少'],
+  ['少','しょう/すく/すこ','few/little','peu','少し休みましょう。','すこしやすみましょう。','Reposons-nous un peu.','adj','多少'],
+  ['店','てん/みせ','shop/store','magasin/boutique','あの店でパンを買います。','あのみせでぱんをかいます。','J\'achete du pain dans ce magasin.','place','店'],
+  ['道','どう/みち','road/way','chemin/route','この道をまっすぐ行ってください。','このみちをまっすぐいってください。','Allez tout droit sur cette route.','place','道'],
+  ['駅','えき','station','gare','駅まで歩きます。','えきまであるきます。','Je marche jusqu\'a la gare.','place','駅'],
+  ['空','くう/そら/あ/から','sky/empty','ciel/vide','空がきれいですね。','そらがきれいですね。','Le ciel est beau, n\'est-ce pas ?','nature','空'],
+  ['夕','せき/ゆう','evening','soir','夕ごはんは何ですか。','ゆうごはんはなんですか。','Qu\'y a-t-il pour le diner ?','time','夕']
+];
+
+var JLPT_N4_DATA = [
+  ['会','かい/あ.う','meet','rencontrer','友達に会いました。','ともだちにあいました。','J\'ai rencontré un ami.','action','会合'],
+  ['同','どう/おな.じ','same','même','同じ色のシャツを買った。','おなじいろのシャツをかった。','J\'ai acheté une chemise de la même couleur.','abstract','同'],
+  ['事','じ/こと','thing, matter','chose, affaire','大事なことを忘れた。','だいじなことをわすれた。','J\'ai oublié quelque chose d\'important.','abstract','事物'],
+  ['自','じ/し/みずか.ら','self','soi-même','自分で作りました。','じぶんでつくりました。','Je l\'ai fait moi-même.','abstract','自'],
+  ['社','しゃ/やしろ','company, shrine','société, sanctuaire','会社に行きます。','かいしゃにいきます。','Je vais à l\'entreprise.','work','社院'],
+  ['発','はつ/ほつ','departure, emit','départ, émettre','電車が発車します。','でんしゃがはっしゃします。','Le train va partir.','action','発'],
+  ['者','しゃ/もの','person','personne','研究者になりたい。','けんきゅうしゃになりたい。','Je veux devenir chercheur.','people','者員'],
+  ['地','ち/じ','ground','terre, sol','地下鉄に乗ります。','ちかてつにのります。','Je prends le métro.','place','地場所'],
+  ['業','ぎょう/ごう/わざ','business, industry','industrie, affaire','授業が始まります。','じゅぎょうがはじまります。','Le cours va commencer.','work','業'],
+  ['方','ほう/かた','direction, person','direction, personne','あの方は先生です。','あのかたはせんせいです。','Cette personne est professeur.','direction','方'],
+  ['場','じょう/ば','place','lieu, endroit','駐車場はどこですか。','ちゅうしゃじょうはどこですか。','Où est le parking ?','place','地場所'],
+  ['所','しょ/ところ','place','endroit','いい所に住んでいます。','いいところにすんでいます。','J\'habite dans un bel endroit.','place','地場所'],
+  ['員','いん','member','membre','会社員です。','かいしゃいんです。','Je suis employé de bureau.','people','者員'],
+  ['開','かい/あ.く/あ.ける/ひら.く','open','ouvrir','窓を開けてください。','まどをあけてください。','Veuillez ouvrir la fenêtre.','action','開閉'],
+  ['力','りょく/りき/ちから','power','force, pouvoir','力が強い。','ちからがつよい。','Il est fort.','abstract','力'],
+  ['問','もん/と.う/と.い','question','question','問題を解きます。','もんだいをときます。','Je résous le problème.','school','問答'],
+  ['代','だい/たい/か.わる/よ/しろ','generation, replace','génération, remplacer','時代が変わった。','じだいがかわった。','L\'époque a changé.','abstract','代'],
+  ['明','めい/みょう/あか.るい/あ.ける','bright','clair, lumineux','部屋が明るい。','へやがあかるい。','La chambre est lumineuse.','adj','明暗'],
+  ['動','どう/うご.く/うご.かす','move','bouger','動物が好きです。','どうぶつがすきです。','J\'aime les animaux.','action','動運'],
+  ['京','きょう/けい','capital','capitale','東京に住んでいます。','とうきょうにすんでいます。','J\'habite à Tokyo.','place','京'],
+  ['通','つう/とお.る/かよ.う','pass through','passer, traverser','この道を通ります。','このみちをとおります。','Je passe par cette route.','action','通'],
+  ['理','り','reason, logic','raison, logique','料理を作ります。','りょうりをつくります。','Je prépare le repas.','abstract','理'],
+  ['体','たい/てい/からだ','body','corps','体が丈夫です。','からだがじょうぶです。','Mon corps est en bonne santé.','body','体'],
+  ['主','しゅ/す/ぬし/おも','main, master','principal, maître','主人は会社員です。','しゅじんはかいしゃいんです。','Mon mari est employé de bureau.','people','主'],
+  ['題','だい','topic, title','sujet, titre','問題がありますか。','もんだいがありますか。','Y a-t-il un problème ?','school','問題'],
+  ['意','い','meaning, intention','sens, intention','意味が分かりません。','いみがわかりません。','Je ne comprends pas le sens.','abstract','意味'],
+  ['不','ふ/ぶ','not, un-','pas, non','不便な場所です。','ふべんなばしょです。','C\'est un endroit peu pratique.','prefix','不無'],
+  ['作','さく/さ/つく.る','make','faire, fabriquer','ケーキを作りました。','ケーキをつくりました。','J\'ai fait un gâteau.','action','作'],
+  ['用','よう/もち.いる','use','utiliser','用事があります。','ようじがあります。','J\'ai quelque chose à faire.','abstract','用利便'],
+  ['度','ど/たび','degree, time','degré, fois','今度の日曜日に行きます。','こんどのにちようびにいきます。','J\'y vais ce dimanche.','abstract','度'],
+  ['強','きょう/ごう/つよ.い/し.いる','strong','fort','風が強いです。','かぜがつよいです。','Le vent est fort.','adj','強弱'],
+  ['公','こう/おおやけ','public','public','公園で遊びます。','こうえんであそびます。','Je joue dans le parc.','place','公'],
+  ['持','じ/も.つ','hold, have','tenir, avoir','荷物を持ちます。','にもつをもちます。','Je porte les bagages.','action','持'],
+  ['野','や/の','field','champ, plaine','野菜を食べます。','やさいをたべます。','Je mange des légumes.','nature','田野'],
+  ['以','い','by means of','au moyen de','以上で終わります。','いじょうでおわります。','C\'est terminé.','prefix','以'],
+  ['思','し/おも.う','think','penser','日本に行きたいと思います。','にほんにいきたいとおもいます。','Je pense que je veux aller au Japon.','action','思考'],
+  ['家','か/け/いえ/や','house, home','maison, famille','家に帰ります。','いえにかえります。','Je rentre à la maison.','place','家室'],
+  ['世','せ/せい/よ','world, generation','monde, génération','世界は広い。','せかいはひろい。','Le monde est vaste.','abstract','世'],
+  ['正','せい/しょう/ただ.しい/まさ','correct','correct, juste','正しい答えを選んでください。','ただしいこたえをえらんでください。','Veuillez choisir la bonne réponse.','adj','正'],
+  ['知','ち/し.る','know','savoir, connaître','この言葉を知っていますか。','このことばをしっていますか。','Connaissez-vous ce mot ?','action','知'],
+  ['考','こう/かんが.える','think','réfléchir','よく考えてください。','よくかんがえてください。','Réfléchissez bien s\'il vous plaît.','action','思考'],
+  ['教','きょう/おし.える/おそ.わる','teach','enseigner','日本語を教えています。','にほんごをおしえています。','J\'enseigne le japonais.','school','教習'],
+  ['習','しゅう/なら.う','learn','apprendre','ピアノを習っています。','ピアノをならっています。','J\'apprends le piano.','school','教習'],
+  ['運','うん/はこ.ぶ','carry, luck','transporter, chance','運動が好きです。','うんどうがすきです。','J\'aime le sport.','action','動運'],
+  ['集','しゅう/あつ.める/あつ.まる','gather','rassembler','切手を集めています。','きってをあつめています。','Je collectionne les timbres.','action','集'],
+  ['始','し/はじ.める/はじ.まる','begin','commencer','授業が始まります。','じゅぎょうがはじまります。','Le cours commence.','action','始終'],
+  ['終','しゅう/お.わる/お.える','end','finir','仕事が終わりました。','しごとがおわりました。','Le travail est terminé.','action','始終'],
+  ['送','そう/おく.る','send','envoyer','手紙を送りました。','てがみをおくりました。','J\'ai envoyé une lettre.','action','送届'],
+  ['起','き/お.きる/お.こる/お.こす','get up, occur','se lever, se produire','毎朝六時に起きます。','まいあさろくじにおきます。','Je me lève à six heures chaque matin.','action','起'],
+  ['売','ばい/う.る/う.れる','sell','vendre','本を売りました。','ほんをうりました。','J\'ai vendu un livre.','action','売'],
+  ['走','そう/はし.る','run','courir','公園で走ります。','こうえんではしります。','Je cours dans le parc.','action','走歩'],
+  ['歩','ほ/ぶ/ある.く/あゆ.む','walk','marcher','駅まで歩きます。','えきまであるきます。','Je marche jusqu\'à la gare.','action','走歩'],
+  ['住','じゅう/す.む/す.まう','live, reside','habiter','東京に住んでいます。','とうきょうにすんでいます。','J\'habite à Tokyo.','action','住'],
+  ['待','たい/ま.つ','wait','attendre','ここで待ってください。','ここでまってください。','Attendez ici s\'il vous plaît.','action','待'],
+  ['乗','じょう/の.る/の.せる','ride','monter, prendre','バスに乗ります。','バスにのります。','Je prends le bus.','transport','乗'],
+  ['着','ちゃく/じゃく/き.る/つ.く/つ.ける','arrive, wear','arriver, porter','駅に着きました。','えきにつきました。','Je suis arrivé à la gare.','action','着服'],
+  ['使','し/つか.う','use','utiliser','パソコンを使います。','パソコンをつかいます。','J\'utilise un ordinateur.','action','使用'],
+  ['帰','き/かえ.る/かえ.す','return','rentrer','家に帰ります。','いえにかえります。','Je rentre à la maison.','action','帰'],
+  ['届','とど.く/とど.ける','deliver, reach','livrer, parvenir','荷物が届きました。','にもつがとどきました。','Le colis est arrivé.','action','送届'],
+  ['洗','せん/あら.う','wash','laver','手を洗ってください。','てをあらってください。','Lavez-vous les mains s\'il vous plaît.','action','洗'],
+  ['切','せつ/さい/き.る/き.れる','cut','couper','紙を切ります。','かみをきります。','Je coupe le papier.','action','切'],
+  ['転','てん/ころ.がる/ころ.げる','roll, turn','rouler, tourner','自転車に乗ります。','じてんしゃにのります。','Je fais du vélo.','action','転運'],
+  ['研','けん','sharpen, study','étudier, polir','研究室にいます。','けんきゅうしつにいます。','Je suis au laboratoire.','school','研究'],
+  ['究','きゅう/きわ.める','research','recherche','研究を続けます。','けんきゅうをつづけます。','Je continue mes recherches.','school','研究'],
+  ['質','しつ/しち/たち','quality','qualité','質問がありますか。','しつもんがありますか。','Avez-vous une question ?','abstract','質問'],
+  ['験','けん/げん','test, effect','test, effet','試験は来週です。','しけんはらいしゅうです。','L\'examen est la semaine prochaine.','school','験試'],
+  ['試','し/こころ.みる/ため.す','try, test','essayer, tester','試合を見ました。','しあいをみました。','J\'ai regardé le match.','school','験試'],
+  ['工','こう/く','construction, craft','construction, artisanat','工場で働いています。','こうじょうではたらいています。','Je travaille dans une usine.','work','工'],
+  ['族','ぞく','tribe, family','famille, tribu','家族は四人です。','かぞくはよにんです。','Ma famille compte quatre personnes.','family','族'],
+  ['銀','ぎん','silver','argent','銀行に行きます。','ぎんこうにいきます。','Je vais à la banque.','money','銀'],
+  ['院','いん','institution','institution','病院に行きました。','びょういんにいきました。','Je suis allé à l\'hôpital.','place','社院'],
+  ['医','い','medicine, doctor','médecine, médecin','医者になりたいです。','いしゃになりたいです。','Je veux devenir médecin.','people','医病薬'],
+  ['病','びょう/へい/や.む/やまい','sick','maladie','病気になりました。','びょうきになりました。','Je suis tombé malade.','body','医病薬'],
+  ['死','し/し.ぬ','die','mourir','花が死んでしまった。','はながしんでしまった。','La fleur est morte.','abstract','死'],
+  ['薬','やく/くすり','medicine','médicament','薬を飲みました。','くすりをのみました。','J\'ai pris un médicament.','object','医病薬'],
+  ['特','とく','special','spécial','特別な日です。','とくべつなひです。','C\'est un jour spécial.','adj','特別'],
+  ['別','べつ/わか.れる','separate, special','séparé, spécial','友達と別れました。','ともだちとわかれました。','J\'ai quitté mon ami.','adj','特別'],
+  ['有','ゆう/う/あ.る','exist, have','exister, avoir','有名な人です。','ゆうめいなひとです。','C\'est une personne célèbre.','abstract','有無'],
+  ['無','む/ぶ/な.い','nothing','rien, sans','無理をしないでください。','むりをしないでください。','Ne vous forcez pas.','abstract','有無不'],
+  ['色','しょく/しき/いろ','color','couleur','何色が好きですか。','なにいろがすきですか。','Quelle couleur aimez-vous ?','color','色'],
+  ['赤','せき/しゃく/あか/あか.い','red','rouge','赤いりんごを買いました。','あかいりんごをかいました。','J\'ai acheté une pomme rouge.','color','赤青黒'],
+  ['青','せい/しょう/あお/あお.い','blue','bleu','空は青いです。','そらはあおいです。','Le ciel est bleu.','color','赤青黒'],
+  ['黒','こく/くろ/くろ.い','black','noir','黒い猫がいます。','くろいねこがいます。','Il y a un chat noir.','color','赤青黒'],
+  ['春','しゅん/はる','spring','printemps','春は花がきれいです。','はるははながきれいです。','Les fleurs sont belles au printemps.','season','春夏秋冬'],
+  ['夏','か/げ/なつ','summer','été','夏は暑いです。','なつはあついです。','L\'été est chaud.','season','春夏秋冬'],
+  ['秋','しゅう/あき','autumn','automne','秋は紅葉がきれいです。','あきはこうようがきれいです。','Les feuilles d\'automne sont belles.','season','春夏秋冬'],
+  ['冬','とう/ふゆ','winter','hiver','冬は寒いです。','ふゆはさむいです。','L\'hiver est froid.','season','春夏秋冬'],
+  ['朝','ちょう/あさ','morning','matin','朝ごはんを食べました。','あさごはんをたべました。','J\'ai pris le petit-déjeuner.','time','朝昼夜晩'],
+  ['昼','ちゅう/ひる','noon, daytime','midi, journée','昼ごはんを食べましょう。','ひるごはんをたべましょう。','Mangeons le déjeuner.','time','朝昼夜晩'],
+  ['夜','や/よ/よる','night','nuit','夜は静かです。','よるはしずかです。','La nuit est calme.','time','朝昼夜晩'],
+  ['晩','ばん','evening','soir','晩ごはんを作ります。','ばんごはんをつくります。','Je prépare le dîner.','time','朝昼夜晩'],
+  ['門','もん/かど','gate','porte, portail','学校の門の前で待ちます。','がっこうのもんのまえでまちます。','J\'attends devant le portail de l\'école.','place','門'],
+  ['広','こう/ひろ.い/ひろ.がる/ひろ.める','wide','large, vaste','この公園は広いです。','このこうえんはひろいです。','Ce parc est vaste.','adj','広'],
+  ['重','じゅう/ちょう/おも.い/かさ.ねる/え','heavy','lourd','この荷物は重いです。','このにもつはおもいです。','Ce bagage est lourd.','adj','重軽'],
+  ['軽','けい/かる.い/かろ.やか','light (weight)','léger','このかばんは軽いです。','このかばんはかるいです。','Ce sac est léger.','adj','重軽'],
+  ['急','きゅう/いそ.ぐ','hurry, urgent','se dépêcher, urgent','急いでください。','いそいでください。','Dépêchez-vous s\'il vous plaît.','action','急'],
+  ['悪','あく/お/わる.い','bad','mauvais','天気が悪いです。','てんきがわるいです。','Le temps est mauvais.','adj','悪'],
+  ['短','たん/みじか.い','short','court','この道は短いです。','このみちはみじかいです。','Cette route est courte.','adj','短'],
+  ['暗','あん/くら.い','dark','sombre','部屋が暗いです。','へやがくらいです。','La chambre est sombre.','adj','明暗'],
+  ['太','たい/た/ふと.い/ふと.る','thick, fat','gros, épais','太い木があります。','ふといきがあります。','Il y a un gros arbre.','adj','太細'],
+  ['細','さい/ほそ.い/ほそ.る/こま.かい','thin, fine','fin, mince','細い道を歩きます。','ほそいみちをあるきます。','Je marche dans une rue étroite.','adj','太細'],
+  ['弱','じゃく/よわ.い/よわ.る','weak','faible','体が弱いです。','からだがよわいです。','Mon corps est faible.','adj','強弱'],
+  ['建','けん/こん/た.てる/た.つ','build','construire','家を建てました。','いえをたてました。','J\'ai construit une maison.','action','建工'],
+  ['味','み/あじ/あじ.わう','taste','goût','この料理は味がいい。','このりょうりはあじがいい。','Ce plat a bon goût.','food','味'],
+  ['注','ちゅう/そそ.ぐ','pour, note','verser, attention','注意してください。','ちゅういしてください。','Faites attention s\'il vous plaît.','action','注'],
+  ['図','ず/と/はか.る','diagram, map','plan, carte','図書館で本を借りました。','としょかんでほんをかりました。','J\'ai emprunté un livre à la bibliothèque.','object','図'],
+  ['産','さん/う.む/う.まれる','produce, birth','produire, naissance','お土産を買いました。','おみやげをかいました。','J\'ai acheté un souvenir.','work','産'],
+  ['文','ぶん/もん/ふみ','sentence, writing','phrase, écriture','文を書きます。','ぶんをかきます。','J\'écris une phrase.','school','文字'],
+  ['字','じ/あざ','character, letter','caractère, lettre','漢字を勉強します。','かんじをべんきょうします。','J\'étudie les kanji.','school','文字漢'],
+  ['物','ぶつ/もつ/もの','thing','chose, objet','買い物に行きます。','かいものにいきます。','Je vais faire des courses.','object','事物'],
+  ['音','おん/いん/おと/ね','sound','son','音楽が好きです。','おんがくがすきです。','J\'aime la musique.','art','音楽'],
+  ['楽','がく/らく/たの.しい/たの.しむ','fun, music','amusant, musique','楽しかったです。','たのしかったです。','C\'était amusant.','art','音楽'],
+  ['心','しん/こころ','heart, mind','coeur, esprit','心配しないでください。','しんぱいしないでください。','Ne vous inquiétez pas.','body','心'],
+  ['室','しつ/むろ','room','salle, chambre','教室に入ります。','きょうしつにはいります。','J\'entre dans la salle de classe.','place','家室'],
+  ['親','しん/おや/した.しい','parent, intimate','parent, intime','親に電話しました。','おやにでんわしました。','J\'ai téléphoné à mes parents.','family','親兄弟姉妹'],
+  ['兄','けい/きょう/あに','older brother','frère aîné','兄は大学生です。','あにはだいがくせいです。','Mon frère aîné est étudiant.','family','親兄弟姉妹'],
+  ['弟','てい/だい/おとうと','younger brother','frère cadet','弟は高校生です。','おとうとはこうこうせいです。','Mon frère cadet est lycéen.','family','親兄弟姉妹'],
+  ['姉','し/あね','older sister','soeur aînée','姉は先生です。','あねはせんせいです。','Ma soeur aînée est professeur.','family','親兄弟姉妹'],
+  ['妹','まい/いもうと','younger sister','soeur cadette','妹は中学生です。','いもうとはちゅうがくせいです。','Ma soeur cadette est collégienne.','family','親兄弟姉妹'],
+  ['夫','ふう/ふ/おっと','husband','mari','夫は会社員です。','おっとはかいしゃいんです。','Mon mari est employé de bureau.','family','夫妻'],
+  ['妻','さい/つま','wife','épouse','妻は料理が上手です。','つまはりょうりがじょうずです。','Ma femme cuisine bien.','family','夫妻'],
+  ['映','えい/うつ.る/うつ.す/は.える','reflect, project','refléter, projeter','映画を見ました。','えいがをみました。','J\'ai vu un film.','art','映画'],
+  ['画','が/かく/えが.く','picture, drawing','image, dessin','映画が好きです。','えいががすきです。','J\'aime les films.','art','映画図'],
+  ['歌','か/うた/うた.う','song, sing','chanson, chanter','歌を歌いました。','うたをうたいました。','J\'ai chanté une chanson.','art','歌'],
+  ['計','けい/はか.る/はか.らう','measure, plan','mesurer, planifier','時計を見ました。','とけいをみました。','J\'ai regardé l\'horloge.','object','計'],
+  ['点','てん','point','point','百点を取りました。','ひゃくてんをとりました。','J\'ai eu cent points.','number','点'],
+  ['引','いん/ひ.く/ひ.ける','pull','tirer','ドアを引いてください。','ドアをひいてください。','Tirez la porte s\'il vous plaît.','action','引押'],
+  ['押','おう/お.す/お.さえる','push','pousser','ボタンを押してください。','ボタンをおしてください。','Appuyez sur le bouton s\'il vous plaît.','action','引押'],
+  ['閉','へい/し.める/し.まる/と.じる/と.ざす','close','fermer','ドアを閉めてください。','ドアをしめてください。','Fermez la porte s\'il vous plaît.','action','開閉'],
+  ['経','けい/きょう/へ.る/た.つ','pass, experience','passer, expérience','経験がありますか。','けいけんがありますか。','Avez-vous de l\'expérience ?','abstract','経'],
+  ['変','へん/か.わる/か.える','change, strange','changer, étrange','天気が変わりました。','てんきがかわりました。','Le temps a changé.','abstract','変'],
+  ['決','けつ/き.める/き.まる','decide','décider','旅行の日を決めました。','りょこうのひをきめました。','J\'ai décidé la date du voyage.','action','決'],
+  ['石','せき/しゃく/こく/いし','stone','pierre','大きい石があります。','おおきいいしがあります。','Il y a une grosse pierre.','nature','石'],
+  ['林','りん/はやし','woods','bois, forêt','林の中を歩きました。','はやしのなかをあるきました。','J\'ai marché dans le bois.','nature','林森'],
+  ['森','しん/もり','forest','forêt','森は暗いです。','もりはくらいです。','La forêt est sombre.','nature','林森'],
+  ['池','ち/いけ','pond','étang','池に魚がいます。','いけにさかながいます。','Il y a des poissons dans l\'étang.','nature','池海'],
+  ['海','かい/うみ','sea','mer','海で泳ぎました。','うみでおよぎました。','J\'ai nagé dans la mer.','nature','池海'],
+  ['鳥','ちょう/とり','bird','oiseau','鳥が飛んでいます。','とりがとんでいます。','Un oiseau vole.','nature','鳥魚犬'],
+  ['魚','ぎょ/うお/さかな','fish','poisson','魚を食べます。','さかなをたべます。','Je mange du poisson.','food','鳥魚犬'],
+  ['犬','けん/いぬ','dog','chien','犬と散歩します。','いぬとさんぽします。','Je me promène avec le chien.','nature','鳥魚犬'],
+  ['肉','にく','meat','viande','肉を買いました。','にくをかいました。','J\'ai acheté de la viande.','food','肉魚'],
+  ['茶','ちゃ/さ','tea','thé','お茶を飲みましょう。','おちゃをのみましょう。','Buvons du thé.','food','茶'],
+  ['堂','どう','hall','salle, temple','食堂で昼ごはんを食べます。','しょくどうでひるごはんをたべます。','Je déjeune à la cantine.','place','堂'],
+  ['台','だい/たい','stand, counter','support, comptoir','台所で料理します。','だいどころでりょうりします。','Je cuisine dans la cuisine.','object','台'],
+  ['紙','し/かみ','paper','papier','紙に名前を書いてください。','かみになまえをかいてください。','Écrivez votre nom sur le papier.','object','紙'],
+  ['曜','よう','day of the week','jour de la semaine','何曜日ですか。','なんようびですか。','Quel jour de la semaine est-ce ?','time','曜'],
+  ['漢','かん','China, kanji','Chine, kanji','漢字が難しいです。','かんじがむずかしいです。','Les kanji sont difficiles.','school','文字漢'],
+  ['服','ふく','clothes','vêtements','新しい服を買いました。','あたらしいふくをかいました。','J\'ai acheté de nouveaux vêtements.','object','着服'],
+  ['町','ちょう/まち','town','ville, quartier','この町は静かです。','このまちはしずかです。','Cette ville est calme.','place','町村'],
+  ['村','そん/むら','village','village','小さい村に住んでいます。','ちいさいむらにすんでいます。','J\'habite dans un petit village.','place','町村'],
+  ['答','とう/こた.える/こた.え','answer','répondre, réponse','質問に答えてください。','しつもんにこたえてください。','Répondez à la question s\'il vous plaît.','school','問答'],
+  ['記','き/しる.す','record, write','noter, enregistrer','日記を書いています。','にっきをかいています。','J\'écris un journal intime.','action','記'],
+  ['号','ごう','number, issue','numéro','電話番号を教えてください。','でんわばんごうをおしえてください。','Donnez-moi votre numéro de téléphone.','number','号'],
+  ['利','り/き.く','profit, advantage','profit, avantage','便利な場所です。','べんりなばしょです。','C\'est un endroit pratique.','abstract','用利便'],
+  ['便','べん/びん/たよ.り','convenience','commodité','不便な所に住んでいます。','ふべんなところにすんでいます。','J\'habite dans un endroit peu pratique.','abstract','用利便'],
+  ['飯','はん/めし','meal, rice','repas, riz','ご飯を食べましょう。','ごはんをたべましょう。','Mangeons.','food','飯料'],
+  ['料','りょう','fee, material','frais, matériau','料理が上手です。','りょうりがじょうずです。','Il cuisine bien.','food','飯料'],
+  ['旅','りょ/たび','travel','voyage','旅行に行きたいです。','りょこうにいきたいです。','Je veux voyager.','action','旅'],
+  ['勉','べん','effort, study','effort, étude','勉強しましょう。','べんきょうしましょう。','Étudions.','school','勉'],
+  ['私','し/わたし/わたくし','I, private','je, privé','私は学生です。','わたしはがくせいです。','Je suis étudiant.','people','私'],
+  ['頭','とう/ず/あたま/かしら','head','tête','頭が痛いです。','あたまがいたいです。','J\'ai mal à la tête.','body','頭顔首'],
+  ['顔','がん/かお','face','visage','顔を洗います。','かおをあらいます。','Je me lave le visage.','body','頭顔首'],
+  ['首','しゅ/くび','neck','cou','首が痛いです。','くびがいたいです。','J\'ai mal au cou.','body','頭顔首'],
+  ['声','せい/しょう/こえ/こわ','voice','voix','大きい声で話してください。','おおきいこえではなしてください。','Parlez à voix haute s\'il vous plaît.','body','声'],
+  ['払','ふつ/はら.う','pay','payer','お金を払いました。','おかねをはらいました。','J\'ai payé.','money','払'],
+  ['禁','きん','prohibit','interdire','ここは禁煙です。','ここはきんえんです。','Il est interdit de fumer ici.','abstract','禁'],
+  ['困','こん/こま.る','troubled','être en difficulté','困りました。','こまりました。','Je suis embêté.','action','困'],
+  ['真','しん/ま/まこと','true, real','vrai, réel','写真を撮りました。','しゃしんをとりました。','J\'ai pris une photo.','abstract','真正'],
+  ['英','えい','England, excellent','anglais, excellent','英語を話します。','えいごをはなします。','Je parle anglais.','school','英'],
+  ['仕','し/じ/つか.える','serve','servir','仕事が忙しいです。','しごとがいそがしいです。','Le travail est chargé.','work','仕'],
+  ['去','きょ/こ/さ.る','leave, past','quitter, passé','去年日本に行きました。','きょねんにほんにいきました。','Je suis allé au Japon l\'an dernier.','time','去'],
+  ['近','きん/ちか.い','near','proche','駅の近くに住んでいます。','えきのちかくにすんでいます。','J\'habite près de la gare.','position','近遠'],
+  ['遠','えん/おん/とお.い','far','loin','学校は遠いです。','がっこうはとおいです。','L\'école est loin.','position','近遠'],
+  ['早','そう/さっ/はや.い/はや.まる','early','tôt','朝早く起きます。','あさはやくおきます。','Je me lève tôt le matin.','time','早'],
+  ['風','ふう/ふ/かぜ/かざ','wind, style','vent, style','今日は風が強い。','きょうはかぜがつよい。','Le vent est fort aujourd\'hui.','nature','風'],
+  ['止','し/と.まる/と.める','stop','arrêter','車を止めてください。','くるまをとめてください。','Arrêtez la voiture s\'il vous plaît.','action','止'],
+  ['光','こう/ひか.る/ひかり','light','lumière','光がまぶしいです。','ひかりがまぶしいです。','La lumière est éblouissante.','nature','光明'],
+  ['合','ごう/がっ/かっ/あ.う/あ.わせる','match, meet','correspondre, réunir','試合が始まります。','しあいがはじまります。','Le match va commencer.','action','会合'],
+  ['回','かい/まわ.る/まわ.す','turn, time','tourner, fois','三回行きました。','さんかいいきました。','J\'y suis allé trois fois.','number','回'],
+  ['交','こう/まじ.わる/ま.じる/か.う','exchange, mix','échanger, mélanger','交番はどこですか。','こうばんはどこですか。','Où est le poste de police ?','action','交通'],
+  ['配','はい/くば.る','distribute, worry','distribuer, s\'inquiéter','心配しないでください。','しんぱいしないでください。','Ne vous inquiétez pas.','action','配'],
+  ['進','しん/すす.む/すす.める','advance','avancer','前に進んでください。','まえにすすんでください。','Avancez s\'il vous plaît.','action','進'],
+  ['受','じゅ/う.ける/う.かる','receive','recevoir','プレゼントを受け取りました。','プレゼントをうけとりました。','J\'ai reçu un cadeau.','action','受'],
+  ['渡','と/わた.る/わた.す','cross, hand over','traverser, remettre','橋を渡ります。','はしをわたります。','Je traverse le pont.','action','渡']
+];
+
+var JLPT_N3_DATA = [
+  ['政','せい/まつりごと','politics','politique','政治に興味があります。','せいじにきょうみがあります。','Je m\'intéresse à la politique.','society','政治'],
+  ['議','ぎ','discussion','discussion','会議は三時からです。','かいぎはさんじからです。','La réunion est à partir de trois heures.','society','議論'],
+  ['民','みん/たみ','people','peuple','国民の意見を聞く。','こくみんのいけんをきく。','Écouter l\'opinion du peuple.','society','民族'],
+  ['連','れん/つらなる','connect','relier','連絡してください。','れんらくしてください。','Veuillez me contacter.','society','連絡'],
+  ['対','たい/つい','opposite','opposé','反対意見もあります。','はんたいいけんもあります。','Il y a aussi des opinions contraires.','abstract','対象'],
+  ['部','ぶ','section','section','営業部で働いています。','えいぎょうぶではたらいています。','Je travaille au département commercial.','work','部分'],
+  ['市','し/いち','city','ville','市役所に行きます。','しやくしょにいきます。','Je vais à la mairie.','place','市場'],
+  ['内','ない/うち','inside','intérieur','国内旅行をしたい。','こくないりょこうをしたい。','Je veux faire un voyage intérieur.','position','内外'],
+  ['相','そう/あい','mutual','mutuel','相談したいことがあります。','そうだんしたいことがあります。','J\'ai quelque chose dont je voudrais discuter.','abstract','相手'],
+  ['定','てい/さだめる','fix','fixer','予定を確認します。','よていをかくにんします。','Je confirme le programme.','abstract','定期'],
+  ['選','せん/えらぶ','choose','choisir','好きなものを選んでください。','すきなものをえらんでください。','Choisissez ce que vous aimez.','action','選択'],
+  ['実','じつ/み','reality','réalité','実は私も知りません。','じつはわたしもしりません。','En fait, moi non plus je ne sais pas.','abstract','実際'],
+  ['関','かん/せき','connection','rapport','関係ありません。','かんけいありません。','Cela n\'a aucun rapport.','abstract','関連'],
+  ['全','ぜん/まったく','whole','entier','全部食べました。','ぜんぶたべました。','J\'ai tout mangé.','abstract','全体'],
+  ['表','ひょう/おもて/あらわす','surface','surface','表現が難しいです。','ひょうげんがむずかしいです。','L\'expression est difficile.','abstract','表現'],
+  ['戦','せん/たたかう','war','guerre','戦争は悲しいです。','せんそうはかなしいです。','La guerre est triste.','society','戦争'],
+  ['最','さい/もっとも','most','le plus','最近忙しいです。','さいきんいそがしいです。','Je suis occupé ces derniers temps.','prefix','最初'],
+  ['現','げん/あらわれる','present','présent','現在の状況を説明します。','げんざいのじょうきょうをせつめいします。','J\'explique la situation actuelle.','abstract','現実'],
+  ['調','ちょう/しらべる','investigate','examiner','調査の結果が出ました。','ちょうさのけっかがでました。','Les résultats de l\'enquête sont sortis.','action','調査'],
+  ['化','か/ばける','change','transformation','文化を大切にする。','ぶんかをたいせつにする。','Chérir la culture.','abstract','変化'],
+  ['当','とう/あたる','hit','correspondre','当然のことです。','とうぜんのことです。','C\'est tout à fait normal.','abstract','当然'],
+  ['権','けん/ごん','authority','autorité','人権を守る。','じんけんをまもる。','Protéger les droits de l\'homme.','society','権利'],
+  ['制','せい','system','système','制度を改革する。','せいどをかいかくする。','Réformer le système.','society','制度'],
+  ['論','ろん','theory','théorie','論文を書いています。','ろんぶんをかいています。','J\'écris une thèse.','abstract','議論'],
+  ['付','ふ/つける','attach','attacher','名前を付けてください。','なまえをつけてください。','Veuillez lui donner un nom.','action','付近'],
+  ['際','さい/きわ','occasion','occasion','国際会議に参加する。','こくさいかいぎにさんかする。','Participer à une conférence internationale.','abstract','国際'],
+  ['想','そう','concept','concept','想像できません。','そうぞうできません。','Je ne peux pas l\'imaginer.','abstract','想像'],
+  ['設','せつ/もうける','establish','établir','施設を見学する。','しせつをけんがくする。','Visiter un établissement.','action','設計'],
+  ['価','か','price','prix','評価が高い。','ひょうかがたかい。','L\'évaluation est élevée.','abstract','価値'],
+  ['資','し','resources','ressources','資料を準備する。','しりょうをじゅんびする。','Préparer les documents.','work','資料'],
+  ['構','こう/かまえる','structure','structure','構造が複雑です。','こうぞうがふくざつです。','La structure est complexe.','abstract','構造'],
+  ['域','いき','area','zone','地域の問題を話し合う。','ちいきのもんだいをはなしあう。','Discuter des problèmes régionaux.','place','地域'],
+  ['示','じ/しめす','show','montrer','指示に従ってください。','しじにしたがってください。','Veuillez suivre les instructions.','action','表示'],
+  ['情','じょう/なさけ','emotion','émotion','情報を集める。','じょうほうをあつめる。','Rassembler des informations.','emotion','情報'],
+  ['報','ほう/むくいる','report','rapport','報告書を提出する。','ほうこくしょをていしゅつする。','Soumettre un rapport.','work','報告'],
+  ['育','いく/そだてる','raise','élever','教育は大切です。','きょういくはたいせつです。','L\'éducation est importante.','action','教育'],
+  ['規','き','standard','norme','規則を守ってください。','きそくをまもってください。','Veuillez respecter les règles.','society','規則'],
+  ['則','そく','rule','règle','法則を学ぶ。','ほうそくをまなぶ。','Apprendre les lois.','society','規則'],
+  ['増','ぞう/ふえる','increase','augmenter','人口が増えています。','じんこうがふえています。','La population augmente.','abstract','増減'],
+  ['減','げん/へる','decrease','diminuer','体重が減りました。','たいじゅうがへりました。','J\'ai perdu du poids.','abstract','増減'],
+  ['算','さん','calculate','calculer','計算が合わない。','けいさんがあわない。','Le calcul ne correspond pas.','abstract','計算'],
+  ['基','き/もと','base','base','基本を大切にする。','きほんをたいせつにする。','Chérir les bases.','abstract','基本'],
+  ['件','けん','matter','affaire','事件が起きました。','じけんがおきました。','Un incident s\'est produit.','abstract','条件'],
+  ['任','にん/まかせる','responsibility','responsabilité','責任を果たす。','せきにんをはたす。','Assumer sa responsabilité.','work','責任'],
+  ['供','きょう/とも','offer','offrir','子供が遊んでいる。','こどもがあそんでいる。','Les enfants jouent.','action','提供'],
+  ['述','じゅつ/のべる','state','énoncer','意見を述べる。','いけんをのべる。','Énoncer une opinion.','action','記述'],
+  ['容','よう','contain','contenir','内容を確認する。','ないようをかくにんする。','Vérifier le contenu.','abstract','内容'],
+  ['断','だん/ことわる','refuse','refuser','判断が難しい。','はんだんがむずかしい。','Le jugement est difficile.','action','判断'],
+  ['提','てい','propose','proposer','提案があります。','ていあんがあります。','J\'ai une proposition.','action','提出'],
+  ['程','てい/ほど','extent','degré','日程を調整する。','にっていをちょうせいする。','Ajuster le calendrier.','abstract','程度'],
+  ['能','のう','ability','capacité','可能性があります。','かのうせいがあります。','Il y a une possibilité.','abstract','能力'],
+  ['確','かく/たしか','certain','certain','確認してください。','かくにんしてください。','Veuillez vérifier.','abstract','確認'],
+  ['取','しゅ/とる','take','prendre','取り消しはできません。','とりけしはできません。','L\'annulation n\'est pas possible.','action','取得'],
+  ['得','とく/える','gain','obtenir','納得しました。','なっとくしました。','Je suis convaincu.','action','取得'],
+  ['組','そ/くむ','group','groupe','番組を見る。','ばんぐみをみる。','Regarder une émission.','action','組織'],
+  ['予','よ','advance','avance','予約をお願いします。','よやくをおねがいします。','Je voudrais faire une réservation.','abstract','予定'],
+  ['指','し/ゆび/さす','finger','doigt','指輪をもらいました。','ゆびわをもらいました。','J\'ai reçu une bague.','body','指示'],
+  ['期','き/ご','period','période','期限に間に合わない。','きげんにまにあわない。','Je ne serai pas dans les délais.','abstract','期間'],
+  ['効','こう/きく','effect','effet','効果がありました。','こうかがありました。','Cela a eu de l\'effet.','abstract','効果'],
+  ['統','とう/すべる','unite','unifier','統計を取る。','とうけいをとる。','Faire des statistiques.','abstract','統計'],
+  ['約','やく','promise','promesse','約束を守る。','やくそくをまもる。','Tenir sa promesse.','abstract','約束'],
+  ['原','げん/はら','original','original','原因を調べる。','げんいんをしらべる。','Chercher la cause.','abstract','原因'],
+  ['費','ひ/ついやす','expense','dépense','交通費がかかる。','こうつうひがかかる。','Les frais de transport coûtent cher.','abstract','費用'],
+  ['挙','きょ/あげる','raise','lever','選挙に行きましょう。','せんきょにいきましょう。','Allons voter.','society','選挙'],
+  ['応','おう','respond','répondre','応援しています。','おうえんしています。','Je vous soutiens.','action','応用'],
+  ['求','きゅう/もとめる','request','demander','要求を出す。','ようきゅうをだす。','Formuler une demande.','action','要求'],
+  ['認','にん/みとめる','recognize','reconnaître','確認をお願いします。','かくにんをおねがいします。','Veuillez confirmer.','action','確認'],
+  ['識','しき','knowledge','connaissance','常識がない。','じょうしきがない。','Il n\'a pas de sens commun.','abstract','知識'],
+  ['保','ほ/たもつ','preserve','préserver','保険に入る。','ほけんにはいる。','Souscrire une assurance.','action','保護'],
+  ['格','かく','status','statut','性格が良い。','せいかくがよい。','Il a un bon caractère.','abstract','性格'],
+  ['態','たい','attitude','attitude','態度を改める。','たいどをあらためる。','Corriger son attitude.','abstract','状態'],
+  ['済','さい/すむ','settle','régler','経済が悪化する。','けいざいがあっかする。','L\'économie se dégrade.','society','経済'],
+  ['導','どう/みちびく','guide','guider','指導をお願いします。','しどうをおねがいします。','Je vous demande de me guider.','action','指導'],
+  ['向','こう/むく','face','direction','方向を変える。','ほうこうをかえる。','Changer de direction.','action','方向'],
+  ['備','び/そなえる','prepare','préparer','準備ができました。','じゅんびができました。','Les préparatifs sont terminés.','action','準備'],
+  ['観','かん','view','vue','観光地を巡る。','かんこうちをめぐる。','Visiter des sites touristiques.','action','観光'],
+  ['判','はん/ばん','judge','juger','判断を下す。','はんだんをくだす。','Porter un jugement.','action','判断'],
+  ['限','げん/かぎる','limit','limite','制限時間があります。','せいげんじかんがあります。','Il y a un temps limité.','abstract','限界'],
+  ['反','はん/そる','anti','anti','反対します。','はんたいします。','Je m\'y oppose.','abstract','反対'],
+  ['央','おう','center','centre','中央に集まる。','ちゅうおうにあつまる。','Se rassembler au centre.','position','中央'],
+  ['革','かく/かわ','reform','réforme','改革が必要です。','かいかくがひつようです。','Une réforme est nécessaire.','society','革命'],
+  ['条','じょう','article','article','条件を確認する。','じょうけんをかくにんする。','Vérifier les conditions.','abstract','条件'],
+  ['労','ろう','labor','travail','労働時間が長い。','ろうどうじかんがながい。','Les heures de travail sont longues.','work','労働'],
+  ['勢','せい/いきおい','force','force','姿勢を正す。','しせいをただす。','Corriger sa posture.','abstract','勢力'],
+  ['農','のう','agriculture','agriculture','農業を営む。','のうぎょうをいとなむ。','Exploiter une ferme.','work','農業'],
+  ['収','しゅう/おさめる','obtain','obtenir','収入が少ない。','しゅうにゅうがすくない。','Le revenu est faible.','abstract','収入'],
+  ['結','けつ/むすぶ','tie','lier','結果を待つ。','けっかをまつ。','Attendre le résultat.','action','結果'],
+  ['整','せい/ととのえる','arrange','arranger','整理整頓する。','せいりせいとんする。','Ranger et mettre en ordre.','action','整理'],
+  ['義','ぎ','righteousness','justice','意義のある仕事。','いぎのあるしごと。','Un travail significatif.','abstract','主義'],
+  ['評','ひょう','evaluate','évaluer','評判が良い。','ひょうばんがよい。','La réputation est bonne.','abstract','評価'],
+  ['状','じょう','condition','condition','状況を把握する。','じょうきょうをはあくする。','Saisir la situation.','abstract','状態'],
+  ['率','りつ/ひきいる','rate','taux','成功率が高い。','せいこうりつがたかい。','Le taux de réussite est élevé.','abstract','確率'],
+  ['常','じょう/つね','usual','habituel','日常生活を楽しむ。','にちじょうせいかつをたのしむ。','Profiter de la vie quotidienne.','abstract','常識'],
+  ['額','がく/ひたい','amount','montant','金額を確認する。','きんがくをかくにんする。','Vérifier le montant.','abstract','金額'],
+  ['順','じゅん','order','ordre','順番に並ぶ。','じゅんばんにならぶ。','Se mettre en rang dans l\'ordre.','abstract','順序'],
+  ['接','せつ/つぐ','contact','contact','直接会いたい。','ちょくせつあいたい。','Je veux le rencontrer directement.','action','接続'],
+  ['影','えい/かげ','shadow','ombre','影響を受ける。','えいきょうをうける。','Être influencé.','nature','影響'],
+  ['環','かん','ring','anneau','環境を守る。','かんきょうをまもる。','Protéger l\'environnement.','nature','環境'],
+  ['境','きょう/さかい','boundary','frontière','環境問題は深刻です。','かんきょうもんだいはしんこくです。','Les problèmes environnementaux sont graves.','nature','環境'],
+  ['像','ぞう','image','image','想像してみてください。','そうぞうしてみてください。','Essayez d\'imaginer.','abstract','想像'],
+  ['余','よ/あまる','surplus','surplus','余裕がない。','よゆうがない。','Je n\'ai pas de marge.','abstract','余裕'],
+  ['補','ほ/おぎなう','supplement','compléter','補助金をもらう。','ほじょきんをもらう。','Recevoir une subvention.','action','補助'],
+  ['比','ひ/くらべる','compare','comparer','去年と比べて暖かい。','きょねんとくらべてあたたかい。','Il fait plus chaud par rapport à l\'an dernier.','action','比較'],
+  ['較','かく','compare','comparer','比較して選ぶ。','ひかくしてえらぶ。','Choisir en comparant.','action','比較'],
+  ['準','じゅん','standard','norme','準備が整いました。','じゅんびがととのいました。','Les préparatifs sont en ordre.','abstract','基準'],
+  ['標','ひょう','mark','marque','目標を立てる。','もくひょうをたてる。','Se fixer un objectif.','abstract','目標'],
+  ['査','さ','inspect','inspecter','調査する。','ちょうさする。','Enquêter.','action','調査'],
+  ['検','けん','examine','examiner','検査を受ける。','けんさをうける。','Passer un examen médical.','action','検査'],
+  ['討','とう/うつ','discuss','discuter','検討してみます。','けんとうしてみます。','Je vais y réfléchir.','action','検討'],
+  ['積','せき/つむ','accumulate','accumuler','面積が広い。','めんせきがひろい。','La surface est grande.','abstract','面積'],
+  ['責','せき/せめる','blame','blâmer','責任者は誰ですか。','せきにんしゃはだれですか。','Qui est le responsable ?','abstract','責任'],
+  ['担','たん/かつぐ','carry','porter','担当者に聞いてください。','たんとうしゃにきいてください。','Demandez au responsable.','action','担当'],
+  ['念','ねん','wish','voeu','記念日を祝う。','きねんびをいわう。','Célébrer un anniversaire.','abstract','記念'],
+  ['放','ほう/はなす','release','libérer','放送が始まる。','ほうそうがはじまる。','L\'émission commence.','action','放送'],
+  ['否','ひ/いな','negate','nier','賛否両論ある。','さんぴりょうろんある。','Il y a des pour et des contre.','abstract','否定'],
+  ['賛','さん','approve','approuver','賛成します。','さんせいします。','Je suis d\'accord.','action','賛成'],
+  ['退','たい/しりぞく','retreat','reculer','退院しました。','たいいんしました。','Je suis sorti de l\'hôpital.','action','退職'],
+  ['移','い/うつる','transfer','transférer','移動してください。','いどうしてください。','Veuillez vous déplacer.','action','移動'],
+  ['因','いん/よる','cause','cause','原因がわかりました。','げんいんがわかりました。','La cause a été identifiée.','abstract','原因'],
+  ['再','さい/ふたたび','again','encore','再来週会いましょう。','さらいしゅうあいましょう。','Voyons-nous la semaine d\'après.','prefix','再開'],
+  ['割','かつ/わる','divide','diviser','割引がありますか。','わりびきがありますか。','Y a-t-il une réduction ?','action','割合'],
+  ['造','ぞう/つくる','create','créer','製造業が盛んです。','せいぞうぎょうがさかんです。','L\'industrie manufacturière est florissante.','action','製造'],
+  ['損','そん/そこなう','damage','dommage','損害を受ける。','そんがいをうける。','Subir des dommages.','abstract','損害'],
+  ['益','えき/やく','benefit','bénéfice','利益を上げる。','りえきをあげる。','Augmenter les bénéfices.','abstract','利益'],
+  ['善','ぜん/よい','good','bien','改善が必要です。','かいぜんがひつようです。','Une amélioration est nécessaire.','abstract','善悪'],
+  ['居','きょ/いる','reside','résider','居間でくつろぐ。','いまでくつろぐ。','Se détendre dans le salon.','place','居住'],
+  ['犯','はん/おかす','crime','crime','犯人が捕まった。','はんにんがつかまった。','Le criminel a été arrêté.','society','犯罪'],
+  ['罪','ざい/つみ','sin','péché','罪を犯す。','つみをおかす。','Commettre un péché.','society','犯罪'],
+  ['刑','けい','punishment','punition','刑事事件です。','けいじじけんです。','C\'est une affaire pénale.','society','刑罰'],
+  ['裁','さい/たつ','judge','juger','裁判所に行く。','さいばんしょにいく。','Aller au tribunal.','society','裁判'],
+  ['官','かん','official','fonctionnaire','警察官に聞く。','けいさつかんにきく。','Demander à un policier.','work','官僚'],
+  ['争','そう/あらそう','conflict','conflit','競争が激しい。','きょうそうがはげしい。','La concurrence est féroce.','action','戦争'],
+  ['治','じ/ち/おさめる','govern','gouverner','政治について学ぶ。','せいじについてまなぶ。','Étudier la politique.','society','政治'],
+  ['独','どく/ひとり','alone','seul','独立した生活をする。','どくりつしたせいかつをする。','Mener une vie indépendante.','abstract','独立'],
+  ['州','しゅう/す','state','état','九州に住んでいます。','きゅうしゅうにすんでいます。','J\'habite à Kyushu.','place','州立'],
+  ['県','けん','prefecture','préfecture','神奈川県に住んでいる。','かながわけんにすんでいる。','J\'habite dans la préfecture de Kanagawa.','place','県庁'],
+  ['府','ふ','urban prefecture','préfecture urbaine','大阪府に住む。','おおさかふにすむ。','Habiter dans la préfecture d\'Osaka.','place','政府'],
+  ['省','しょう/はぶく','ministry','ministère','外務省で働く。','がいむしょうではたらく。','Travailler au ministère des affaires étrangères.','society','省略'],
+  ['党','とう','party','parti','政党の代表。','せいとうのだいひょう。','Le représentant du parti politique.','society','政党'],
+  ['派','は','faction','faction','派遣社員として働く。','はけんしゃいんとしてはたらく。','Travailler comme intérimaire.','society','派遣'],
+  ['票','ひょう','vote','vote','投票に行く。','とうひょうにいく。','Aller voter.','society','投票'],
+  ['賀','が','congratulate','féliciter','年賀状を書く。','ねんがじょうをかく。','Écrire des cartes de voeux.','society','祝賀'],
+  ['職','しょく','employment','emploi','職業は何ですか。','しょくぎょうはなんですか。','Quelle est votre profession ?','work','職業'],
+  ['務','む/つとめる','duty','devoir','事務所で仕事をする。','じむしょでしごとをする。','Travailler au bureau.','work','義務'],
+  ['氏','し/うじ','family name','nom de famille','氏名を記入する。','しめいをきにゅうする。','Inscrire son nom complet.','society','氏名'],
+  ['授','じゅ/さずける','grant','accorder','教授に質問する。','きょうじゅにしつもんする。','Poser une question au professeur.','action','授業'],
+  ['術','じゅつ','technique','technique','技術が進歩する。','ぎじゅつがしんぽする。','La technologie progresse.','science','技術'],
+  ['宅','たく','home','domicile','自宅で仕事をする。','じたくでしごとをする。','Travailler à domicile.','place','自宅'],
+  ['値','ち/ね/あたい','value','valeur','値段が高すぎる。','ねだんがたかすぎる。','Le prix est trop élevé.','abstract','価値'],
+  ['税','ぜい','tax','impôt','消費税が上がった。','しょうひぜいがあがった。','La taxe de consommation a augmenté.','society','税金'],
+  ['預','よ/あずける','deposit','déposer','銀行にお金を預ける。','ぎんこうにおかねをあずける。','Déposer de l\'argent à la banque.','action','預金'],
+  ['貯','ちょ/ためる','save','épargner','貯金する習慣をつける。','ちょきんするしゅうかんをつける。','Prendre l\'habitude d\'épargner.','action','貯金'],
+  ['輸','ゆ','transport','transporter','輸出が増加した。','ゆしゅつがぞうかした。','Les exportations ont augmenté.','action','輸出'],
+  ['販','はん','sell','vendre','販売員として働く。','はんばいいんとしてはたらく。','Travailler comme vendeur.','work','販売'],
+  ['法','ほう','law','loi','法律を守る。','ほうりつをまもる。','Respecter la loi.','society','法律'],
+  ['律','りつ','law','loi','規律を守る。','きりつをまもる。','Respecter la discipline.','society','法律'],
+  ['委','い','committee','comité','委員会に参加する。','いいんかいにさんかする。','Participer au comité.','society','委員'],
+  ['軍','ぐん','army','armée','軍隊が出動した。','ぐんたいがしゅつどうした。','L\'armée s\'est déployée.','society','軍隊'],
+  ['罰','ばつ/ばち','penalty','pénalité','罰金を払う。','ばっきんをはらう。','Payer une amende.','society','刑罰'],
+  ['防','ぼう/ふせぐ','prevent','prévenir','予防が大切です。','よぼうがたいせつです。','La prévention est importante.','action','予防'],
+  ['支','し/ささえる','support','soutenir','支出を減らす。','ししゅつをへらす。','Réduire les dépenses.','action','支持'],
+  ['貿','ぼう','trade','commerce extérieur','貿易会社で働く。','ぼうえきがいしゃではたらく。','Travailler dans une société commerciale.','work','貿易'],
+  ['易','えき/い/やさしい','easy','facile','貿易が盛んです。','ぼうえきがさかんです。','Le commerce est florissant.','abstract','貿易'],
+  ['株','かぶ','stock','action boursière','株式投資をする。','かぶしきとうしをする。','Investir en actions.','work','株式'],
+  ['証','しょう','proof','preuve','証明書を発行する。','しょうめいしょをはっこうする。','Délivrer un certificat.','abstract','証明'],
+  ['券','けん','ticket','billet','入場券を買う。','にゅうじょうけんをかう。','Acheter un billet d\'entrée.','abstract','券売'],
+  ['商','しょう/あきなう','commerce','commerce','商品を選ぶ。','しょうひんをえらぶ。','Choisir un produit.','work','商売'],
+  ['解','かい/とく','solve','résoudre','問題を解決する。','もんだいをかいけつする。','Résoudre un problème.','action','解決'],
+  ['伝','でん/つたえる','transmit','transmettre','伝統を守る。','でんとうをまもる。','Préserver la tradition.','action','伝統'],
+  ['消','しょう/きえる/けす','extinguish','éteindre','消費が増えている。','しょうひがふえている。','La consommation augmente.','action','消費'],
+  ['信','しん','believe','croire','信頼できる人です。','しんらいできるひとです。','C\'est une personne de confiance.','abstract','信用'],
+  ['深','しん/ふかい','deep','profond','深い意味がある。','ふかいいみがある。','Cela a un sens profond.','adj','深刻'],
+  ['絶','ぜつ/たえる','sever','couper','絶対に行きます。','ぜったいにいきます。','J\'irai absolument.','abstract','絶対'],
+  ['並','へい/ならぶ','line up','aligner','並行して進める。','へいこうしてすすめる。','Avancer en parallèle.','action','並行'],
+  ['略','りゃく','abbreviate','abréger','省略してもいいですか。','しょうりゃくしてもいいですか。','Peut-on abréger ?','abstract','省略'],
+  ['複','ふく','duplicate','dupliquer','複雑な問題です。','ふくざつなもんだいです。','C\'est un problème complexe.','abstract','複雑'],
+  ['雑','ざつ/ぞう','miscellaneous','divers','雑誌を読む。','ざっしをよむ。','Lire un magazine.','abstract','複雑'],
+  ['捜','そう/さがす','search','chercher','犯人を捜す。','はんにんをさがす。','Rechercher le criminel.','action','捜査'],
+  ['被','ひ/こうむる','suffer','subir','被害が大きい。','ひがいがおおきい。','Les dégâts sont importants.','abstract','被害'],
+  ['告','こく/つげる','inform','informer','広告を出す。','こうこくをだす。','Publier une annonce.','action','報告'],
+  ['捕','ほ/とらえる/つかまえる','capture','capturer','犯人を捕まえた。','はんにんをつかまえた。','On a attrapé le criminel.','action','逮捕'],
+  ['疑','ぎ/うたがう','doubt','douter','疑問に思う。','ぎもんにおもう。','Avoir un doute.','abstract','疑問'],
+  ['層','そう','layer','couche','高層ビルが多い。','こうそうびるがおおい。','Il y a beaucoup de gratte-ciels.','abstract','階層'],
+  ['精','せい/しょう','spirit','esprit','精神的に疲れた。','せいしんてきにつかれた。','Je suis épuisé mentalement.','abstract','精神'],
+  ['純','じゅん','pure','pur','純粋な気持ちです。','じゅんすいなきもちです。','C\'est un sentiment pur.','adj','純粋'],
+  ['絡','らく/からむ','entangle','enchevêtrer','連絡先を教えてください。','れんらくさきをおしえてください。','Donnez-moi vos coordonnées.','action','連絡'],
+  ['側','そく/がわ','side','côté','左側に座る。','ひだりがわにすわる。','S\'asseoir du côté gauche.','position','両側'],
+  ['測','そく/はかる','measure','mesurer','温度を測る。','おんどをはかる。','Mesurer la température.','action','測定'],
+  ['豊','ほう/ゆたか','abundant','abondant','経験が豊かです。','けいけんがゆたかです。','L\'expérience est riche.','adj','豊富'],
+  ['混','こん/まじる','mix','mélanger','電車が混んでいる。','でんしゃがこんでいる。','Le train est bondé.','action','混雑'],
+  ['幅','ふく/はば','width','largeur','幅が広い道。','はばがひろいみち。','Une route large.','abstract','幅広'],
+  ['除','じょ/のぞく','exclude','exclure','掃除をする。','そうじをする。','Faire le ménage.','action','除外'],
+  ['違','い/ちがう','differ','différer','間違いを直す。','まちがいをなおす。','Corriger une erreur.','action','相違'],
+  ['覚','かく/おぼえる/さめる','remember','se souvenir','漢字を覚える。','かんじをおぼえる。','Mémoriser les kanji.','action','感覚'],
+  ['痛','つう/いたい','pain','douleur','頭が痛い。','あたまがいたい。','J\'ai mal à la tête.','body','苦痛'],
+  ['技','ぎ/わざ','skill','compétence','技術を磨く。','ぎじゅつをみがく。','Perfectionner sa technique.','science','技術'],
+  ['囲','い/かこむ','surround','entourer','範囲が広い。','はんいがひろい。','La portée est large.','action','範囲'],
+  ['圧','あつ','pressure','pression','血圧が高い。','けつあつがたかい。','La tension artérielle est élevée.','science','気圧'],
+  ['汚','お/よごれる/きたない','dirty','sale','空気が汚れている。','くうきがよごれている。','L\'air est pollué.','adj','汚染'],
+  ['灰','かい/はい','ash','cendre','灰色の空。','はいいろのそら。','Un ciel gris.','nature','灰色'],
+  ['逮','たい','arrest','arrêter','逮捕された。','たいほされた。','Il a été arrêté.','society','逮捕'],
+  ['護','ご','protect','protéger','弁護士に相談する。','べんごしにそうだんする。','Consulter un avocat.','society','保護'],
+  ['警','けい','warn','avertir','警察に届ける。','けいさつにとどける。','Signaler à la police.','society','警察'],
+  ['優','ゆう/やさしい/すぐれる','gentle','doux','優先順位を決める。','ゆうせんじゅんいをきめる。','Déterminer les priorités.','adj','優先'],
+  ['欠','けつ/かける','lack','manquer','欠点を直す。','けってんをなおす。','Corriger ses défauts.','abstract','欠席'],
+  ['姿','し/すがた','figure','silhouette','姿勢を正す。','しせいをただす。','Corriger sa posture.','body','姿勢'],
+  ['敵','てき/かたき','enemy','ennemi','敵に勝つ。','てきにかつ。','Vaincre l\'ennemi.','society','敵対'],
+  ['鮮','せん/あざやか','fresh','frais','新鮮な魚を食べる。','しんせんなさかなをたべる。','Manger du poisson frais.','food','新鮮'],
+  ['宣','せん','declare','déclarer','宣伝する。','せんでんする。','Faire de la publicité.','action','宣言'],
+  ['誤','ご/あやまる','mistake','erreur','誤解しないでください。','ごかいしないでください。','Ne vous méprenez pas.','abstract','誤解'],
+  ['訴','そ/うったえる','sue','poursuivre','裁判に訴える。','さいばんにうったえる。','Intenter un procès.','society','訴訟'],
+  ['属','ぞく','belong','appartenir','金属でできている。','きんぞくでできている。','C\'est en métal.','abstract','所属'],
+  ['促','そく/うながす','urge','inciter','促進する。','そくしんする。','Promouvoir.','action','促進'],
+  ['誌','し','magazine','magazine','雑誌を買う。','ざっしをかう。','Acheter un magazine.','abstract','雑誌'],
+  ['従','じゅう/したがう','follow','suivre','従来の方法を使う。','じゅうらいのほうほうをつかう。','Utiliser la méthode traditionnelle.','action','従来'],
+  ['彩','さい/いろどる','color','colorer','色彩が豊かです。','しきさいがゆたかです。','Les couleurs sont riches.','art','色彩'],
+  ['快','かい/こころよい','pleasant','agréable','快適な生活。','かいてきなせいかつ。','Une vie confortable.','adj','快適'],
+  ['怒','ど/おこる/いかる','anger','colère','怒りを抑える。','いかりをおさえる。','Contenir sa colère.','emotion','怒り'],
+  ['恋','れん/こい/こいしい','love','amour','恋人と会う。','こいびととあう。','Rencontrer son amoureux.','emotion','恋愛'],
+  ['恥','ち/はじ/はずかしい','shame','honte','恥ずかしい思い。','はずかしいおもい。','Un sentiment de honte.','emotion','恥辱'],
+  ['患','かん/わずらう','afflict','affliger','患者を診る。','かんじゃをみる。','Examiner un patient.','body','患者'],
+  ['悲','ひ/かなしい','sad','triste','悲しい知らせ。','かなしいしらせ。','Une triste nouvelle.','emotion','悲劇'],
+  ['感','かん','feel','sentir','感動しました。','かんどうしました。','J\\\'ai été ému.','emotion','感覚'],
+  ['慣','かん/なれる','accustom','habituer','習慣を変える。','しゅうかんをかえる。','Changer ses habitudes.','action','習慣'],
+  ['憲','けん','constitution','constitution','憲法を守る。','けんぽうをまもる。','Respecter la constitution.','society','憲法'],
+  ['我','が/われ','self','soi','我慢する。','がまんする。','Patienter.','abstract','自我'],
+  ['戸','こ/と','door','porte','戸を閉める。','とをしめる。','Fermer la porte.','place','戸口'],
+  ['批','ひ','criticize','critiquer','批判する。','ひはんする。','Critiquer.','action','批判'],
+  ['抜','ばつ/ぬく','extract','extraire','歯を抜く。','はをぬく。','Extraire une dent.','action','抜群'],
+  ['招','しょう/まねく','invite','inviter','友達を招く。','ともだちをまねく。','Inviter des amis.','action','招待'],
+  ['挿','そう/さす','insert','insérer','花を挿す。','はなをさす。','Insérer une fleur.','action','挿入'],
+  ['捨','しゃ/すてる','discard','jeter','ゴミを捨てる。','ごみをすてる。','Jeter les ordures.','action','捨取'],
+  ['探','たん/さがす','search','chercher','仕事を探す。','しごとをさがす。','Chercher un emploi.','action','探検'],
+  ['描','びょう/えがく','draw','dessiner','絵を描く。','えをえがく。','Dessiner un tableau.','art','描写'],
+  ['携','けい/たずさえる','carry','porter','携帯電話を使う。','けいたいでんわをつかう。','Utiliser un téléphone portable.','action','携帯'],
+  ['撃','げき/うつ','attack','attaquer','目撃した。','もくげきした。','J\\\'ai été témoin.','action','攻撃'],
+  ['撮','さつ/とる','photograph','photographier','写真を撮る。','しゃしんをとる。','Prendre une photo.','action','撮影'],
+  ['改','かい/あらためる','reform','réformer','改善する。','かいぜんする。','Améliorer.','action','改革'],
+  ['攻','こう/せめる','attack','attaquer','攻撃する。','こうげきする。','Attaquer.','action','攻撃'],
+  ['救','きゅう/すくう','rescue','sauver','命を救う。','いのちをすくう。','Sauver une vie.','action','救助'],
+  ['敷','ふ/しく','spread','étendre','布団を敷く。','ふとんをしく。','Étendre le futon.','action','敷地'],
+  ['施','し/せ/ほどこす','carry out','mettre en oeuvre','施設を利用する。','しせつをりようする。','Utiliser les installations.','action','施設'],
+  ['暑','しょ/あつい','hot','chaud','暑い日が続く。','あついひがつづく。','Les jours chauds se poursuivent.','nature','暑寒'],
+  ['暴','ぼう/あばく','violent','violent','暴力はいけない。','ぼうりょくはいけない。','La violence est inacceptable.','abstract','暴力'],
+  ['替','たい/かえる','exchange','échanger','両替する。','りょうがえする。','Changer de la monnaie.','action','交替'],
+  ['未','み/いまだ','not yet','pas encore','未来を信じる。','みらいをしんじる。','Croire en l\\\'avenir.','prefix','未来'],
+  ['板','はん/ばん/いた','board','planche','黒板に書く。','こくばんにかく。','Écrire au tableau.','abstract','看板'],
+  ['果','か/はたす','fruit','fruit','結果が出た。','けっかがでた。','Le résultat est sorti.','abstract','結果'],
+  ['染','せん/そめる/しみる','dye','teindre','汚染が進む。','おせんがすすむ。','La pollution progresse.','action','汚染'],
+  ['栄','えい/さかえる','prosper','prospérer','栄養を取る。','えいようをとる。','Prendre des nutriments.','abstract','栄養'],
+  ['根','こん/ね','root','racine','根本的な問題。','こんぽんてきなもんだい。','Un problème fondamental.','nature','根本'],
+  ['棄','き','abandon','abandonner','廃棄する。','はいきする。','Jeter aux rebuts.','action','放棄'],
+  ['棚','たな','shelf','étagère','本棚を整理する。','ほんだなをせいりする。','Ranger l\\\'étagère.','place','棚'],
+  ['横','おう/よこ','horizontal','horizontal','横断歩道を渡る。','おうだんほどうをわたる。','Traverser le passage piéton.','position','横断'],
+  ['次','じ/つぎ','next','suivant','次の電車に乗る。','つぎのでんしゃにのる。','Prendre le prochain train.','abstract','次第'],
+  ['武','ぶ/む','military','militaire','武器を使わない。','ぶきをつかわない。','Ne pas utiliser d\\\'armes.','society','武器'],
+  ['毒','どく','poison','poison','食中毒に注意する。','しょくちゅうどくにちゅういする。','Faire attention aux intoxications alimentaires.','science','毒物'],
+  ['泉','せん/いずみ','spring','source','温泉に入る。','おんせんにはいる。','Se baigner dans une source chaude.','nature','温泉'],
+  ['津','つ/しん','harbor','port','津波に気をつける。','つなみにきをつける。','Faire attention aux tsunamis.','nature','津波'],
+  ['流','りゅう/ながれる','flow','couler','流行に乗る。','りゅうこうにのる。','Suivre la mode.','action','流行'],
+  ['温','おん/あたたかい','warm','chaud','温度を測る。','おんどをはかる。','Mesurer la température.','nature','温度'],
+  ['源','げん/みなもと','source','source','資源を守る。','しげんをまもる。','Protéger les ressources.','abstract','資源'],
+  ['演','えん','perform','jouer','演説をする。','えんぜつをする。','Faire un discours.','art','演劇'],
+  ['然','ぜん/ねん','nature','nature','自然を楽しむ。','しぜんをたのしむ。','Profiter de la nature.','nature','自然'],
+  ['照','しょう/てる/てらす','illuminate','illuminer','照明をつける。','しょうめいをつける。','Allumer l\\\'éclairage.','action','照明'],
+  ['熟','じゅく','mature','mûr','熟練した技術。','じゅくれんしたぎじゅつ。','Une technique expérimentée.','adj','熟練'],
+  ['熱','ねつ/あつい','heat','chaleur','熱があります。','ねつがあります。','J\\\'ai de la fièvre.','science','発熱'],
+  ['版','はん','edition','édition','出版する。','しゅっぱんする。','Publier.','work','出版'],
+  ['申','しん/もうす','say humbly','dire humblement','申し込みをする。','もうしこみをする。','Faire une demande.','action','申請'],
+  ['界','かい','world','monde','世界中を旅する。','せかいじゅうをたびする。','Voyager dans le monde entier.','place','世界'],
+  ['留','りゅう/る/とめる/とまる','detain','retenir','留学する。','りゅうがくする。','Étudier à l\\\'étranger.','action','留学'],
+  ['番','ばん','number','numéro','番号を教えてください。','ばんごうをおしえてください。','Donnez-moi le numéro.','abstract','番号'],
+  ['異','い/こと','different','différent','異常な天気。','いじょうなてんき。','Un temps anormal.','adj','異常'],
+  ['症','しょう','symptom','symptôme','症状が出る。','しょうじょうがでる。','Des symptômes apparaissent.','body','症状'],
+  ['療','りょう','heal','guérir','治療を受ける。','ちりょうをうける。','Recevoir un traitement.','body','治療'],
+  ['皮','ひ/かわ','skin','peau','皮膚を守る。','ひふをまもる。','Protéger la peau.','body','皮膚'],
+  ['盛','せい/もる/さかる','prosper','prospérer','盛り上がる。','もりあがる。','S\\\'animer.','action','繁盛'],
+  ['監','かん','supervise','superviser','監督する。','かんとくする。','Superviser.','work','監督'],
+  ['直','ちょく/じき/なおす','direct','direct','直接話す。','ちょくせつはなす。','Parler directement.','action','直接'],
+  ['眠','みん/ねむる','sleep','dormir','眠れない夜。','ねむれないよる。','Une nuit sans sommeil.','action','睡眠'],
+  ['祖','そ','ancestor','ancêtre','祖父母に会う。','そふぼにあう。','Rencontrer les grands-parents.','society','祖先'],
+  ['神','しん/じん/かみ','god','dieu','神社に行く。','じんじゃにいく。','Aller au sanctuaire.','society','神社'],
+  ['福','ふく','fortune','fortune','幸福な生活。','こうふくなせいかつ。','Une vie heureuse.','abstract','幸福'],
+  ['秀','しゅう/ひいでる','excel','exceller','優秀な学生。','ゆうしゅうながくせい。','Un étudiant excellent.','adj','優秀'],
+  ['秒','びょう','second','seconde','三十秒で終わる。','さんじゅうびょうでおわる。','Finir en trente secondes.','abstract','秒速'],
+  ['種','しゅ/たね','seed','graine','種類が多い。','しゅるいがおおい。','Il y a beaucoup de variétés.','abstract','種類'],
+  ['章','しょう','chapter','chapitre','第一章を読む。','だいいっしょうをよむ。','Lire le premier chapitre.','abstract','文章'],
+  ['端','たん/はし/はた','edge','bord','端末を使う。','たんまつをつかう。','Utiliser un terminal.','position','端末'],
+  ['第','だい','ordinal','ordinal','第一印象が大切。','だいいちいんしょうがたいせつ。','La première impression est importante.','prefix','第一'],
+  ['筆','ひつ/ふで','brush','pinceau','筆で字を書く。','ふでじをかく。','Écrire au pinceau.','art','筆記'],
+  ['等','とう/ひとしい','equal','égal','平等な社会。','びょうどうなしゃかい。','Une société égalitaire.','abstract','平等'],
+  ['簡','かん','simple','simple','簡単な問題。','かんたんなもんだい。','Un problème simple.','adj','簡単'],
+  ['紀','き','chronicle','chronique','世紀が変わる。','せいきがかわる。','Le siècle change.','abstract','世紀'],
+  ['絞','こう/しぼる','squeeze','presser','雑巾を絞る。','ぞうきんをしぼる。','Essorer le chiffon.','action','絞込'],
+  ['給','きゅう','supply','fournir','給料をもらう。','きゅうりょうをもらう。','Recevoir un salaire.','work','給料'],
+  ['継','けい/つぐ','inherit','hériter','継続は力なり。','けいぞくはちからなり。','La persévérance est la clé.','action','継続'],
+  ['維','い','maintain','maintenir','維持する。','いじする。','Maintenir.','action','維持'],
+  ['総','そう','general','général','総合的に判断する。','そうごうてきにはんだんする。','Juger globalement.','abstract','総合'],
+  ['緑','りょく/みどり','green','vert','緑が多い町。','みどりがおおいまち。','Une ville avec beaucoup de verdure.','nature','緑化'],
+  ['編','へん/あむ','knit','tricoter','編集する。','へんしゅうする。','Éditer.','action','編集'],
+  ['練','れん/ねる','practice','pratiquer','練習する。','れんしゅうする。','S\\\'entraîner.','action','練習'],
+  ['縁','えん/ふち','edge','bord','ご縁がありますように。','ごえんがありますように。','J\\\'espère que nous aurons l\\\'occasion.','abstract','縁起'],
+  ['縮','しゅく/ちぢむ','shrink','rétrécir','短縮する。','たんしゅくする。','Raccourcir.','action','縮小'],
+  ['美','び/うつくしい','beautiful','beau','美しい景色。','うつくしいけしき。','Un beau paysage.','adj','美術'],
+  ['羽','う/は/はね','feather','plume','羽が生えている。','はねがはえている。','Il a des plumes.','nature','羽根'],
+  ['肩','けん/かた','shoulder','épaule','肩が痛い。','かたがいたい。','J\\\'ai mal à l\\\'épaule.','body','肩凝'],
+  ['背','はい/せ/そむく','back','dos','背中が痛い。','せなかがいたい。','J\\\'ai mal au dos.','body','背景'],
+  ['胸','きょう/むね','chest','poitrine','胸が痛い。','むねがいたい。','J\\\'ai mal à la poitrine.','body','胸部'],
+  ['腰','よう/こし','waist','taille','腰を下ろす。','こしをおろす。','S\\\'asseoir.','body','腰痛'],
+  ['臣','しん/じん','vassal','vassal','大臣になる。','だいじんになる。','Devenir ministre.','society','大臣'],
+  ['至','し/いたる','reach','atteindre','至急対応する。','しきゅうたいおうする。','Répondre de toute urgence.','abstract','至急'],
+  ['興','こう/きょう/おこる','interest','intérêt','興味があります。','きょうみがあります。','J\\\'ai de l\\\'intérêt.','abstract','興味'],
+  ['船','せん/ふね','ship','navire','船に乗る。','ふねにのる。','Monter sur un bateau.','place','船舶'],
+  ['良','りょう/よい','good','bon','良い天気ですね。','よいてんきですね。','Il fait beau, n\\\'est-ce pas ?','adj','良好'],
+  ['若','じゃく/わかい','young','jeune','若い人が多い。','わかいひとがおおい。','Il y a beaucoup de jeunes.','adj','若者'],
+  ['落','らく/おちる/おとす','fall','tomber','落ち着いてください。','おちついてください。','Calmez-vous.','action','落下'],
+  ['葉','よう/は','leaf','feuille','紅葉がきれいです。','こうようがきれいです。','Les feuilles d\\\'automne sont belles.','nature','紅葉'],
+  ['著','ちょ/あらわす/いちじるしい','author','auteur','著者に会う。','ちょしゃにあう。','Rencontrer l\\\'auteur.','work','著者'],
+  ['装','そう/しょう/よそおう','dress','habiller','装置を設置する。','そうちをせっちする。','Installer un appareil.','action','装置'],
+  ['製','せい','manufacture','fabriquer','製品を作る。','せいひんをつくる。','Fabriquer un produit.','work','製造'],
+  ['要','よう/いる','need','besoin','要点をまとめる。','ようてんをまとめる。','Résumer les points essentiels.','abstract','重要'],
+  ['触','しょく/ふれる/さわる','touch','toucher','触らないでください。','さわらないでください。','Ne touchez pas.','action','接触'],
+  ['訓','くん','teach','enseigner','訓練を受ける。','くんれんをうける。','Recevoir un entraînement.','action','訓練'],
+  ['許','きょ/ゆるす','permit','permettre','許可をもらう。','きょかをもらう。','Obtenir une autorisation.','action','許可'],
+  ['訳','やく/わけ','translate','traduire','訳がわからない。','わけがわからない。','Je ne comprends pas la raison.','abstract','翻訳'],
+  ['説','せつ/とく','explain','expliquer','説明してください。','せつめいしてください。','Veuillez expliquer.','action','説明'],
+  ['課','か','section','section','課題を出す。','かだいをだす。','Donner un devoir.','work','課題'],
+  ['請','せい/しん/こう/うける','request','demander','請求書を送る。','せいきゅうしょをおくる。','Envoyer une facture.','action','請求'],
+  ['謝','しゃ/あやまる','apologize','s\\\'excuser','謝罪する。','しゃざいする。','S\\\'excuser.','action','感謝'],
+  ['象','しょう/ぞう','elephant','éléphant','印象が良い。','いんしょうがよい。','L\\\'impression est bonne.','abstract','印象'],
+  ['負','ふ/まける/おう','lose','perdre','負けたくない。','まけたくない。','Je ne veux pas perdre.','action','勝負'],
+  ['財','ざい/さい','wealth','richesse','財産を管理する。','ざいさんをかんりする。','Gérer ses biens.','abstract','財産'],
+  ['貨','か','goods','marchandise','通貨が変わる。','つうかがかわる。','La monnaie change.','abstract','通貨'],
+  ['貴','き/たっとい/とうとい','precious','précieux','貴重な経験。','きちょうなけいけん。','Une expérience précieuse.','adj','貴重'],
+  ['賞','しょう','prize','prix','賞をもらう。','しょうをもらう。','Recevoir un prix.','abstract','受賞'],
+  ['超','ちょう/こえる','exceed','dépasser','超過料金を払う。','ちょうかりょうきんをはらう。','Payer un supplément.','action','超過'],
+  ['身','しん/み','body','corps','身分証明書を見せる。','みぶんしょうめいしょをみせる。','Montrer sa pièce d\\\'identité.','body','身体'],
+  ['載','さい/のせる','load','charger','記載する。','きさいする。','Inscrire.','action','記載'],
+  ['輪','りん/わ','ring','anneau','指輪をはめる。','ゆびわをはめる。','Mettre une bague.','abstract','車輪'],
+  ['遺','い','bequeath','léguer','遺跡を見学する。','いせきをけんがくする。','Visiter des ruines.','abstract','遺跡'],
+  ['頂','ちょう/いただく','summit','sommet','山頂に着いた。','さんちょうについた。','On est arrivé au sommet.','nature','山頂']
+];
+// Parse raw data into objects
+function jlptParseData(rawData, level) {
+  return rawData.map(function(d) {
+    var readings = d[1].split('/');
+    return {
+      kanji: d[0], readings: readings, mainReading: readings[0],
+      english: d[2], french: d[3],
+      sentence: d[4], sentenceReading: d[5], translation: d[6],
+      level: level, tags: d[7], confGroup: d[8]
+    };
+  });
+}
+
+var JLPT_DATA = {
+  N5: jlptParseData(JLPT_N5_DATA, 'N5'),
+  N4: jlptParseData(JLPT_N4_DATA, 'N4'),
+  N3: jlptParseData(JLPT_N3_DATA, 'N3')
+};
+
+// --- PROGRESS TRACKING ---
+function jlptGetProgress(level) {
+  var d = localStorage.getItem('jlpt_progress_' + level);
+  return d ? JSON.parse(d) : {};
+  // { "kanji": { correct: n, wrong: n, lastSeen: ts, streak: n } }
+}
+function jlptSaveProgress(level, prog) {
+  localStorage.setItem('jlpt_progress_' + level, JSON.stringify(prog));
+}
+function jlptRecordAnswer(level, kanji, correct) {
+  var prog = jlptGetProgress(level);
+  if (!prog[kanji]) prog[kanji] = { correct: 0, wrong: 0, lastSeen: 0, streak: 0 };
+  prog[kanji].lastSeen = Date.now();
+  if (correct) { prog[kanji].correct++; prog[kanji].streak++; }
+  else { prog[kanji].wrong++; prog[kanji].streak = 0; }
+  jlptSaveProgress(level, prog);
+}
+function jlptGetWeakItems(level) {
+  var data = JLPT_DATA[level];
+  var prog = jlptGetProgress(level);
+  var scored = data.map(function(item) {
+    var p = prog[item.kanji] || { correct: 0, wrong: 0, streak: 0 };
+    var total = p.correct + p.wrong;
+    var accuracy = total > 0 ? p.correct / total : 0.5;
+    return { item: item, accuracy: accuracy, total: total, streak: p.streak };
+  });
+  // Items with low accuracy or never seen
+  return scored.filter(function(s) { return s.accuracy < 0.7 || s.total < 3; })
+    .sort(function(a, b) { return a.accuracy - b.accuracy; });
+}
+function jlptGetStats(level) {
+  var data = JLPT_DATA[level];
+  var prog = jlptGetProgress(level);
+  var seen = 0, mastered = 0, totalCorrect = 0, totalWrong = 0;
+  data.forEach(function(item) {
+    var p = prog[item.kanji];
+    if (p && (p.correct + p.wrong) > 0) {
+      seen++;
+      totalCorrect += p.correct;
+      totalWrong += p.wrong;
+      if (p.streak >= 3 && p.correct >= 5) mastered++;
+    }
+  });
+  return { total: data.length, seen: seen, mastered: mastered, correct: totalCorrect, wrong: totalWrong };
+}
+
+// --- JLPT STATE ---
+var _jlpt = { level: 'N5', mode: null, questions: [], current: 0, score: 0, answers: [], batch: [] };
+
+// --- LEVEL SELECT ---
+function jlptShowLevelSelect() {
+  showScreen('jlptLevelScreen');
+  var container = document.getElementById('jlptLevelCards');
+  var levels = [
+    { id: 'N5', name: 'JLPT N5', emoji: '🌸', desc: 'Débutant', color: 'var(--green)' },
+    { id: 'N4', name: 'JLPT N4', emoji: '🎋', desc: 'Élémentaire', color: 'var(--blue)' },
+    { id: 'N3', name: 'JLPT N3', emoji: '🏯', desc: 'Intermédiaire', color: 'var(--purple)' }
+  ];
+  var html = '';
+  levels.forEach(function(lv) {
+    var stats = jlptGetStats(lv.id);
+    var pct = stats.total > 0 ? Math.round(stats.mastered / stats.total * 100) : 0;
+    html += '<div class="game-card" onclick="_jlpt.level=\'' + lv.id + '\';jlptShowHub()" style="display:flex;align-items:center;gap:14px;padding:16px 18px;text-align:left;">';
+    html += '<div style="font-size:2.5rem;flex-shrink:0;">' + lv.emoji + '</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.15rem;color:var(--dark);">' + lv.name + '</div>';
+    html += '<div style="font-size:0.8rem;color:#999;">' + lv.desc + ' — ' + stats.total + ' kanji</div>';
+    html += '<div style="margin-top:6px;background:#eee;border-radius:4px;height:5px;overflow:hidden;">';
+    html += '<div style="height:100%;width:' + pct + '%;background:' + lv.color + ';border-radius:4px;"></div>';
+    html += '</div>';
+    html += '<div style="font-size:0.7rem;color:' + lv.color + ';font-weight:700;margin-top:2px;">' + stats.mastered + '/' + stats.total + ' maîtrisés · ' + stats.seen + ' vus</div>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+// --- HUB (exercise types) ---
+function jlptShowHub() {
+  showScreen('jlptHubScreen');
+  var lv = _jlpt.level;
+  document.getElementById('jlptHubTitle').textContent = '📝 JLPT ' + lv;
+  var stats = jlptGetStats(lv);
+  var weakCount = jlptGetWeakItems(lv).length;
+  var acc = (stats.correct + stats.wrong) > 0 ? Math.round(stats.correct / (stats.correct + stats.wrong) * 100) : 0;
+  document.getElementById('jlptHubStats').textContent = stats.mastered + '/' + stats.total + ' maîtrisés · ' + acc + '% précision' + (weakCount > 0 ? ' · ' + weakCount + ' à revoir' : '');
+
+  var cards = [
+    { type: 'reading', icon: '📖', label: 'Kanji → Lecture', desc: 'Trouve la lecture hiragana' },
+    { type: 'spelling', icon: '✍️', label: 'Lecture → Kanji', desc: 'Trouve le bon kanji' },
+    { type: 'speed', icon: '⚡', label: 'Speed Drill', desc: 'Reconnaissance rapide' },
+    { type: 'weak', icon: '🔄', label: 'Points faibles', desc: weakCount + ' kanji à revoir' },
+    { type: 'test', icon: '📝', label: 'Test simulation', desc: 'Comme au vrai JLPT' },
+    { type: 'meaning', icon: '🌐', label: 'Sens du kanji', desc: 'Trouve la signification' }
+  ];
+  var html = '';
+  cards.forEach(function(c) {
+    var disabled = c.type === 'weak' && weakCount === 0;
+    html += '<div class="game-card' + (disabled ? ' disabled' : '') + '" ' + (disabled ? '' : 'onclick="jlptStartGame(\'' + c.type + '\')"') + ' style="padding:14px;text-align:center;">';
+    html += '<div style="font-size:2rem;">' + c.icon + '</div>';
+    html += '<div style="font-weight:800;font-size:0.95rem;margin-top:6px;">' + c.label + '</div>';
+    html += '<div style="font-size:0.72rem;color:#999;margin-top:3px;">' + c.desc + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('jlptHubCards').innerHTML = html;
+}
+
+// --- QUESTION GENERATORS ---
+function jlptPickDistractors(correct, pool, field, count) {
+  var distractors = [];
+  var used = {};
+  used[correct[field]] = true;
+  var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+  for (var i = 0; i < shuffled.length && distractors.length < count; i++) {
+    if (!used[shuffled[i][field]] && shuffled[i].kanji !== correct.kanji) {
+      used[shuffled[i][field]] = true;
+      distractors.push(shuffled[i]);
+    }
+  }
+  return distractors;
+}
+
+function jlptGenReadingQ(item, pool) {
+  // Show sentence with kanji underlined → pick hiragana reading
+  var ds = jlptPickDistractors(item, pool, 'mainReading', 3);
+  var choices = [item.mainReading].concat(ds.map(function(d) { return d.mainReading; }));
+  choices.sort(function() { return Math.random() - 0.5; });
+  return {
+    type: 'reading', item: item,
+    prompt: item.sentence.replace(item.kanji, '<u style="text-decoration-color:var(--purple);text-underline-offset:4px;font-weight:800;">' + item.kanji + '</u>'),
+    subPrompt: '「' + item.kanji + '」の読み方は？',
+    choices: choices, answer: item.mainReading
+  };
+}
+
+function jlptGenSpellingQ(item, pool) {
+  // Show sentence with hiragana underlined → pick kanji
+  var ds = jlptPickDistractors(item, pool, 'kanji', 3);
+  var choices = [item.kanji].concat(ds.map(function(d) { return d.kanji; }));
+  choices.sort(function() { return Math.random() - 0.5; });
+  return {
+    type: 'spelling', item: item,
+    prompt: item.sentenceReading.replace(item.mainReading, '<u style="text-decoration-color:var(--orange);text-underline-offset:4px;font-weight:800;">' + item.mainReading + '</u>'),
+    subPrompt: '「' + item.mainReading + '」の漢字は？',
+    choices: choices, answer: item.kanji
+  };
+}
+
+function jlptGenMeaningQ(item, pool) {
+  var ds = jlptPickDistractors(item, pool, 'french', 3);
+  var choices = [item.french].concat(ds.map(function(d) { return d.french; }));
+  choices.sort(function() { return Math.random() - 0.5; });
+  return {
+    type: 'meaning', item: item,
+    prompt: '<span style="font-size:3rem;font-weight:800;">' + item.kanji + '</span>',
+    subPrompt: 'Que signifie ce kanji ?',
+    choices: choices, answer: item.french
+  };
+}
+
+function jlptGenQuestions(mode, level, count) {
+  var pool = JLPT_DATA[level];
+  var items;
+  if (mode === 'weak') {
+    var weak = jlptGetWeakItems(level);
+    items = weak.slice(0, count).map(function(w) { return w.item; });
+    if (items.length < count) {
+      var extra = pool.slice().sort(function() { return Math.random() - 0.5; }).slice(0, count - items.length);
+      items = items.concat(extra);
+    }
+  } else {
+    items = pool.slice().sort(function() { return Math.random() - 0.5; }).slice(0, count);
+  }
+
+  var questions = [];
+  items.forEach(function(item) {
+    if (mode === 'reading' || mode === 'weak') {
+      questions.push(jlptGenReadingQ(item, pool));
+    } else if (mode === 'spelling') {
+      questions.push(jlptGenSpellingQ(item, pool));
+    } else if (mode === 'meaning') {
+      questions.push(jlptGenMeaningQ(item, pool));
+    } else if (mode === 'speed') {
+      // Mix of all types
+      var r = Math.random();
+      if (r < 0.33) questions.push(jlptGenReadingQ(item, pool));
+      else if (r < 0.66) questions.push(jlptGenSpellingQ(item, pool));
+      else questions.push(jlptGenMeaningQ(item, pool));
+    } else if (mode === 'test') {
+      // Like real JLPT: mostly reading + spelling
+      if (Math.random() < 0.6) questions.push(jlptGenReadingQ(item, pool));
+      else questions.push(jlptGenSpellingQ(item, pool));
+    }
+  });
+  return questions;
+}
+
+// --- GAME START ---
+function jlptStartGame(mode) {
+  _jlpt.mode = mode;
+  var count = mode === 'test' ? 20 : mode === 'speed' ? 15 : 10;
+  _jlpt.questions = jlptGenQuestions(mode, _jlpt.level, count);
+  _jlpt.current = 0;
+  _jlpt.score = 0;
+  _jlpt.answers = [];
+  _jlpt.startTime = Date.now();
+  _jlpt.speedTimer = null;
+
+  showScreen('jlptGameScreen');
+  jlptRenderQuestion();
+}
+
+function jlptRenderQuestion() {
+  var st = _jlpt;
+  if (st.current >= st.questions.length) {
+    jlptEndGame();
+    return;
+  }
+
+  var q = st.questions[st.current];
+  document.getElementById('jlptProgress').textContent = (st.current + 1) + '/' + st.questions.length;
+  document.getElementById('jlptScore').textContent = st.score;
+  document.getElementById('jlptGameFeedback').textContent = '';
+  document.getElementById('jlptGameFeedback').className = 'feedback';
+
+  var html = '';
+
+  // Sentence / prompt
+  html += '<div style="background:#fff;border-radius:16px;padding:18px 16px;box-shadow:0 3px 12px rgba(0,0,0,0.06);text-align:center;margin-bottom:14px;">';
+  html += '<div style="font-size:1.15rem;line-height:1.8;">' + q.prompt + '</div>';
+  html += '<div style="font-size:0.88rem;color:var(--purple);font-weight:700;margin-top:8px;">' + q.subPrompt + '</div>';
+  html += '</div>';
+
+  // 4 choices
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  q.choices.forEach(function(choice, ci) {
+    var fontSize = q.type === 'meaning' ? '0.9rem' : '1.2rem';
+    html += '<button id="jlptChoice' + ci + '" onclick="jlptAnswer(' + ci + ')" ' +
+      'style="padding:14px 10px;font-size:' + fontSize + ';background:#fff;color:var(--dark);border:2.5px solid #e0d4f0;border-radius:14px;cursor:pointer;transition:all 0.2s;font-weight:700;letter-spacing:1px;" ' +
+      'onmouseover="this.style.borderColor=\'var(--purple)\';this.style.background=\'#f8f4ff\'" ' +
+      'onmouseout="this.style.borderColor=\'#e0d4f0\';this.style.background=\'#fff\'">' +
+      choice + '</button>';
+  });
+  html += '</div>';
+
+  // Speed drill: add timer
+  if (st.mode === 'speed') {
+    html += '<div id="jlptSpeedBar" style="margin-top:10px;background:#eee;border-radius:4px;height:5px;overflow:hidden;">';
+    html += '<div id="jlptSpeedFill" style="height:100%;width:100%;background:var(--orange);transition:width 0.1s linear;"></div>';
+    html += '</div>';
+    if (st.speedTimer) clearInterval(st.speedTimer);
+    var timeLeft = 5000;
+    st.speedTimer = setInterval(function() {
+      timeLeft -= 100;
+      var fill = document.getElementById('jlptSpeedFill');
+      if (fill) fill.style.width = Math.max(0, timeLeft / 5000 * 100) + '%';
+      if (timeLeft <= 0) {
+        clearInterval(st.speedTimer);
+        jlptAnswer(-1); // timeout
+      }
+    }, 100);
+  }
+
+  // Speak the kanji for reading questions
+  if (q.type === 'reading' || q.type === 'meaning') {
+    speakJapanese(q.item.kanji);
+  }
+
+  document.getElementById('jlptGameContent').innerHTML = html;
+}
+
+// --- ANSWER ---
+function jlptAnswer(choiceIdx) {
+  var st = _jlpt;
+  if (st.current >= st.questions.length) return;
+
+  var q = st.questions[st.current];
+  if (st.speedTimer) { clearInterval(st.speedTimer); st.speedTimer = null; }
+
+  var chosen = choiceIdx >= 0 ? q.choices[choiceIdx] : null;
+  var correct = chosen === q.answer;
+
+  // Record
+  jlptRecordAnswer(st.level, q.item.kanji, correct);
+  st.answers.push({ question: q, chosen: chosen, correct: correct });
+
+  if (st.mode === 'test') {
+    // No instant feedback in test mode
+    if (correct) st.score++;
+    st.current++;
+    jlptRenderQuestion();
+    return;
+  }
+
+  // Highlight choices
+  q.choices.forEach(function(c, ci) {
+    var btn = document.getElementById('jlptChoice' + ci);
+    if (!btn) return;
+    btn.onclick = null;
+    btn.onmouseover = null;
+    btn.onmouseout = null;
+    btn.style.cursor = 'default';
+    if (c === q.answer) {
+      btn.style.background = 'rgba(6,214,160,0.15)';
+      btn.style.borderColor = 'var(--green)';
+      btn.style.color = 'var(--green)';
+    } else if (ci === choiceIdx && !correct) {
+      btn.style.background = 'rgba(255,92,92,0.12)';
+      btn.style.borderColor = '#ff5c5c';
+      btn.style.color = '#ff5c5c';
+    }
+  });
+
+  var fb = document.getElementById('jlptGameFeedback');
+  if (correct) {
+    st.score++;
+    fb.textContent = '✓ Correct !';
+    fb.className = 'feedback correct-fb';
+    gamiCorrectAnswer();
+    speakJapanese(q.item.mainReading);
+  } else {
+    fb.innerHTML = choiceIdx < 0 ? '⏱️ Temps écoulé ! Réponse : <strong>' + q.answer + '</strong>' :
+      '✗ Réponse : <strong>' + q.answer + '</strong>';
+    fb.className = 'feedback wrong-fb';
+    gamiWrongAnswer();
+    setTimeout(function() { speakJapanese(q.item.mainReading); }, 300);
+  }
+
+  document.getElementById('jlptScore').textContent = st.score;
+
+  setTimeout(function() {
+    st.current++;
+    jlptRenderQuestion();
+  }, correct ? 900 : 1500);
+}
+
+// --- END GAME ---
+function jlptEndGame() {
+  var st = _jlpt;
+  if (st.speedTimer) { clearInterval(st.speedTimer); st.speedTimer = null; }
+  var elapsed = Math.round((Date.now() - st.startTime) / 1000);
+  var total = st.questions.length;
+  var pct = total > 0 ? Math.round(st.score / total * 100) : 0;
+
+  if (st.mode === 'test') {
+    // Test mode: show result screen with review
+    jlptShowTestResult(st.score, total, elapsed);
+    return;
+  }
+
+  var stars = pct >= 80 ? 3 : pct >= 60 ? 2 : 1;
+  addGameSession('JLPT_' + st.level + '_' + st.mode, st.score * 10, elapsed);
+  var msgs = {
+    reading: pct >= 80 ? 'すばらしい！Excellente lecture !' : pct >= 60 ? 'いいね！Continue !' : 'もっと頑張ろう！',
+    spelling: pct >= 80 ? 'Parfait ! Tu maîtrises les kanji !' : pct >= 60 ? 'Pas mal !' : 'Continue de pratiquer !',
+    speed: pct >= 80 ? 'Rapide et précis !' : pct >= 60 ? 'Bon rythme !' : 'Prends ton temps pour apprendre d\'abord.',
+    weak: pct >= 80 ? 'Tes points faibles s\'améliorent !' : 'Continue à revoir ces kanji.',
+    meaning: pct >= 80 ? 'Tu connais bien les sens !' : 'Révise les significations.'
+  };
+  showEndScreen(st.score + '/' + total, stars, msgs[st.mode] || 'Bien joué !');
+}
+
+// --- TEST RESULT ---
+function jlptShowTestResult(score, total, elapsed) {
+  showScreen('jlptTestResultScreen');
+  var pct = Math.round(score / total * 100);
+  var note20 = Math.round(score / total * 20 * 10) / 10;
+  var noteColor = '#dc3545';
+  if (note20 >= 18) noteColor = '#06D6A0';
+  else if (note20 >= 16) noteColor = '#4CC9F0';
+  else if (note20 >= 14) noteColor = '#FFD93D';
+  else if (note20 >= 12) noteColor = '#FF6B35';
+  else if (note20 >= 10) noteColor = '#e65100';
+  var passed = pct >= 60;
+
+  var html = '<div style="font-family:\'Fredoka One\',cursive;font-size:4rem;color:' + noteColor + ';">' + note20 + '/20</div>';
+  html += '<div style="font-size:1.1rem;font-weight:700;margin-top:6px;">' + score + '/' + total + ' correct (' + pct + '%)</div>';
+  html += '<div style="font-size:2rem;margin-top:8px;">' + (passed ? '🎉 合格！' : '📚 不合格') + '</div>';
+  html += '<div style="font-size:0.85rem;color:#999;margin-top:4px;">' + (passed ? 'Bravo, tu aurais réussi !' : 'Continue à pratiquer !') + ' · ' + elapsed + 's</div>';
+  document.getElementById('jlptTestResultContent').innerHTML = html;
+
+  // Review: show all questions with answers
+  var reviewHtml = '<div style="font-weight:800;font-size:1rem;margin-bottom:10px;">📋 Révision :</div>';
+  _jlpt.answers.forEach(function(a, i) {
+    var q = a.question;
+    var icon = a.correct ? '✅' : '❌';
+    reviewHtml += '<div style="padding:8px 10px;border-radius:10px;margin-bottom:6px;background:' + (a.correct ? '#e8f5e9' : '#ffeef0') + ';font-size:0.85rem;">';
+    reviewHtml += '<div>' + icon + ' <strong>' + q.item.kanji + '</strong> (' + q.item.mainReading + ') — ' + q.item.french + '</div>';
+    if (!a.correct) {
+      reviewHtml += '<div style="color:#999;font-size:0.78rem;margin-top:2px;">Ta réponse : ' + (a.chosen || '—') + ' · Bonne réponse : <strong>' + q.answer + '</strong></div>';
+    }
+    reviewHtml += '</div>';
+  });
+  document.getElementById('jlptTestReview').innerHTML = reviewHtml;
+
+  addGameSession('JLPT_' + _jlpt.level + '_test', Math.round(note20), elapsed);
+}
+
+function jlptQuit() {
+  if (_jlpt.speedTimer) { clearInterval(_jlpt.speedTimer); _jlpt.speedTimer = null; }
+  jlptShowHub();
+}
+
+// --- STUDY LIST ---
+function jlptShowStudyList() {
+  showScreen('jlptStudyScreen');
+  jlptStudyRender('N5');
+}
+
+function jlptStudyRender(level) {
+  // Highlight active button
+  ['N5','N4','N3'].forEach(function(lv) {
+    var btn = document.getElementById('jlptStudy' + lv + 'Btn');
+    if (btn) {
+      btn.className = lv === level ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-outline';
+    }
+  });
+
+  var data = JLPT_DATA[level];
+  var prog = jlptGetProgress(level);
+  var container = document.getElementById('jlptStudyContent');
+
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+  html += '<thead><tr style="background:#f8f4ff;font-weight:800;text-align:left;">';
+  html += '<th style="padding:8px 6px;">漢字</th><th>読み</th><th>Sens</th><th>✓</th><th>✗</th><th>État</th>';
+  html += '</tr></thead><tbody>';
+
+  data.forEach(function(item) {
+    var p = prog[item.kanji] || { correct: 0, wrong: 0, streak: 0 };
+    var total = p.correct + p.wrong;
+    var mastered = p.streak >= 3 && p.correct >= 5;
+    var stateIcon = mastered ? '🟢' : total > 0 ? (p.streak > 0 ? '🟡' : '🔴') : '⚪';
+
+    html += '<tr style="border-bottom:1px solid #f0f0f0;" onclick="jlptStudySpeak(\'' + item.mainReading + '\')">';
+    html += '<td style="padding:6px;font-size:1.3rem;font-weight:800;cursor:pointer;">' + item.kanji + '</td>';
+    html += '<td style="font-size:0.9rem;">' + item.mainReading + '</td>';
+    html += '<td>' + item.french + '</td>';
+    html += '<td style="color:var(--green);font-weight:700;">' + p.correct + '</td>';
+    html += '<td style="color:#ff5c5c;font-weight:700;">' + p.wrong + '</td>';
+    html += '<td>' + stateIcon + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function jlptStudySpeak(reading) {
+  speakJapanese(reading);
+}
+
 // === homework.js ===
 // ============================================
 // HOMEWORK MANAGEMENT
@@ -16172,6 +17356,8 @@ function returnFromEndScreen() {
     showScreen('imgGamePickerScreen');
   } else if ((poemMiniGameState && poemMiniGameState.type) || (poemLearnState && poemLearnState.poem)) {
     showScreen('poemHubScreen');
+  } else if (typeof _jlpt !== 'undefined' && _jlpt && _jlpt.level) {
+    jlptShowHub();
   } else {
     showScreen('homeScreen');
   }
