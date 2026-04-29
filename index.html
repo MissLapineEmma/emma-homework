@@ -1861,12 +1861,23 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
   <!-- ===========================
        HOME SCREEN (Level 1)
        =========================== -->
-  <div class="screen active" id="homeScreen">
+  <!-- ===========================
+       LOGIN / USER SELECT SCREEN
+       =========================== -->
+  <div class="screen active" id="loginScreen">
+    <div style="text-align:center;padding-top:10vh;">
+      <div class="logo"><span class="bee">🪶</span> La Plume</div>
+      <p class="subtitle" style="margin-bottom:40px;">Qui es-tu ?</p>
+      <div id="loginUserGrid" style="display:flex;gap:30px;justify-content:center;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="homeScreen">
     <!-- Profile bar (hidden) -->
     <div id="profileBar" style="display:none;"></div>
     <div id="avatarDisplay" style="display:none;">👧</div>
 
-    <div class="logo"><span class="bee">🪶</span> La Plume d'Emma</div>
+    <div class="logo" id="homeLogoText"><span class="bee">🪶</span> La Plume d'Emma</div>
     <p class="subtitle" id="homeSubtitle">Choisis une matière !</p>
 
     <!-- Gamification: Weekly League bar -->
@@ -1990,6 +2001,17 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
         <div class="subject-name">Japonais</div>
         <div class="subject-count" id="japonaisCount">Kanji</div>
       </div>
+      <div class="subject-box" id="clockSubjectBox" onclick="showScreen('clockGameScreen');initClock();" style="display:none;background:linear-gradient(135deg,#fff5f9,#f0f0ff);">
+        <div class="subject-avatar">🕐</div>
+        <div class="subject-icon">⏰</div>
+        <div class="subject-name">Lire l'heure</div>
+        <div class="subject-count">Aiguilles</div>
+      </div>
+    </div>
+
+    <!-- Logout link -->
+    <div style="text-align:center;margin-top:20px;">
+      <span onclick="logout()" style="cursor:pointer;font-size:0.8rem;color:#aaa;text-decoration:underline;">Changer d'utilisateur</span>
     </div>
   </div>
 
@@ -2067,6 +2089,55 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
         <div class="card-title">Divisions</div>
         <div class="card-desc">Apprends à diviser</div>
         <div class="card-stripe" style="background:linear-gradient(90deg,var(--pink),var(--purple))"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===========================
+       CLOCK GAME SCREEN (CP - Lisa)
+       =========================== -->
+  <div class="screen" id="clockGameScreen">
+    <div class="back-link" onclick="showScreen('homeScreen')">← Retour</div>
+    <div class="logo">🕐 Lire l'heure</div>
+    <p class="subtitle" id="clockSubtitle">Déplace les aiguilles !</p>
+
+    <div style="text-align:center;margin:10px auto;">
+      <!-- Level selector -->
+      <div id="clockLevelBtns" style="margin-bottom:15px;">
+        <button class="btn btn-sm" onclick="setClockLevel(1)" id="clockLvl1Btn" style="font-size:0.85rem;padding:6px 14px;border-radius:20px;margin:0 4px;">Niveau 1 — Heures</button>
+        <button class="btn btn-sm btn-outline" onclick="setClockLevel(2)" id="clockLvl2Btn" style="font-size:0.85rem;padding:6px 14px;border-radius:20px;margin:0 4px;">Niveau 2 — Heures et demie</button>
+      </div>
+
+      <!-- SVG Clock -->
+      <div style="position:relative;width:280px;height:280px;margin:0 auto;">
+        <svg id="clockSVG" viewBox="0 0 300 300" width="280" height="280" style="touch-action:none;">
+          <!-- Clock face -->
+          <circle cx="150" cy="150" r="140" fill="white" stroke="#6C63FF" stroke-width="4"/>
+          <!-- Hour markers and numbers -->
+          <g id="clockMarkers"></g>
+          <!-- Hands -->
+          <line id="clockMinuteHand" x1="150" y1="150" x2="150" y2="40" stroke="#6C63FF" stroke-width="4" stroke-linecap="round" style="display:none;cursor:grab;"/>
+          <line id="clockHourHand" x1="150" y1="150" x2="150" y2="65" stroke="#FF6B9D" stroke-width="7" stroke-linecap="round" style="cursor:grab;"/>
+          <!-- Center dot -->
+          <circle cx="150" cy="150" r="8" fill="#6C63FF"/>
+        </svg>
+      </div>
+
+      <!-- Time display -->
+      <div id="clockTimeDisplay" style="font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--purple);margin-top:15px;">12 : 00</div>
+
+      <!-- Speak button -->
+      <button class="btn" onclick="speakClockTime()" style="margin-top:12px;font-size:1rem;padding:10px 24px;">🔊 Dis-moi l'heure !</button>
+
+      <!-- Quiz mode -->
+      <div id="clockQuizArea" style="margin-top:20px;display:none;">
+        <div style="font-size:1.1rem;font-weight:700;color:#333;" id="clockQuizPrompt"></div>
+        <button class="btn btn-primary" onclick="checkClockAnswer()" style="margin-top:10px;">✅ Vérifier</button>
+        <div id="clockQuizFeedback" style="margin-top:8px;font-size:1rem;font-weight:700;"></div>
+      </div>
+
+      <div style="margin-top:15px;">
+        <button class="btn btn-outline" onclick="startClockQuiz()" style="font-size:0.9rem;padding:8px 18px;">🎯 Mode Quiz</button>
       </div>
     </div>
   </div>
@@ -3527,6 +3598,105 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
 </div>
 
 <script>
+// ============================================
+// USER / PROFILE SYSTEM
+// ============================================
+var APP_USERS = [
+  { id: 'lisa', name: 'Lisa', level: 'CP', avatar: '👧🏼', color: '#FF9ED0' },
+  { id: 'emma', name: 'Emma', level: 'CE2', avatar: '👧', color: '#6C63FF' }
+];
+
+var currentUser = null; // set on login
+
+function initLoginScreen() {
+  var grid = document.getElementById('loginUserGrid');
+  if (!grid) return;
+  var html = '';
+  APP_USERS.forEach(function(u) {
+    html += '<div onclick="loginAs(\'' + u.id + '\')" style="cursor:pointer;text-align:center;padding:25px 30px;border-radius:24px;background:white;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:3px solid ' + u.color + ';transition:transform 0.15s;"' +
+      ' onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'" ontouchstart="this.style.transform=\'scale(0.95)\'" ontouchend="this.style.transform=\'\'">' +
+      '<div style="font-size:3.5rem;">' + u.avatar + '</div>' +
+      '<div style="font-family:\'Fredoka One\',cursive;font-size:1.4rem;color:' + u.color + ';margin-top:8px;">' + u.name + '</div>' +
+      '<div style="font-size:0.8rem;color:#999;margin-top:4px;">' + u.level + '</div>' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function loginAs(userId) {
+  var user = APP_USERS.find(function(u) { return u.id === userId; });
+  if (!user) return;
+  currentUser = user;
+  localStorage.setItem('lastUser', userId);
+
+  // Update home screen
+  var logo = document.getElementById('homeLogoText');
+  if (logo) logo.innerHTML = '<span class="bee">🪶</span> La Plume de ' + user.name;
+
+  // Show/hide sections based on level
+  applyUserLevel();
+  showScreen('homeScreen');
+}
+
+function applyUserLevel() {
+  if (!currentUser) return;
+  var level = currentUser.level;
+
+  // Japonais: only CE2+
+  var japonaisBox = document.querySelector('.subject-japonais');
+  if (japonaisBox) japonaisBox.style.display = (level === 'CE2') ? '' : 'none';
+
+  // Histoire: only CE2+
+  var histoireBox = document.querySelector('.subject-histoire');
+  if (histoireBox) histoireBox.style.display = (level === 'CE2') ? '' : 'none';
+
+  // Clock game: only CP
+  var mathsBox = document.querySelector('.subject-maths');
+  if (mathsBox && level === 'CP') {
+    // For CP: replace maths content with simpler games
+    // We'll add a clock entry on the home screen
+  }
+
+  // Show clock card in subject grid for CP
+  var clockBox = document.getElementById('clockSubjectBox');
+  if (clockBox) clockBox.style.display = (level === 'CP') ? '' : 'none';
+}
+
+// Wrap localStorage to prefix with user ID
+var _origGetItem = localStorage.getItem.bind(localStorage);
+var _origSetItem = localStorage.setItem.bind(localStorage);
+var _origRemoveItem = localStorage.removeItem.bind(localStorage);
+
+function userKey(key) {
+  if (!currentUser) return key;
+  return currentUser.id + '_' + key;
+}
+
+// Override localStorage for game data (called via helper functions)
+function getUserData(key) { return _origGetItem(userKey(key)); }
+function setUserData(key, val) { _origSetItem(userKey(key), val); }
+function removeUserData(key) { _origRemoveItem(userKey(key)); }
+
+// Auto-login last user or show login screen
+function appBoot() {
+  initLoginScreen();
+  var lastUser = localStorage.getItem('lastUser');
+  if (lastUser) {
+    var user = APP_USERS.find(function(u) { return u.id === lastUser; });
+    if (user) {
+      loginAs(user.id);
+      return;
+    }
+  }
+  showScreen('loginScreen');
+}
+
+// Logout — back to login
+function logout() {
+  currentUser = null;
+  showScreen('loginScreen');
+}
+
 // === audio.js ===
 // ============================================
 // AUDIO & TEXT-TO-SPEECH
@@ -15995,6 +16165,214 @@ function jlptStudySpeak(reading) {
   speakJapanese(reading);
 }
 
+// ============================================
+// CLOCK GAME (CP - Lisa)
+// ============================================
+var _clockLevel = 1; // 1 = hours only, 2 = hours + half
+var _clockHour = 12;
+var _clockMinute = 0;
+var _clockDragging = null; // 'hour' or 'minute'
+var _clockQuizTarget = null;
+
+function initClock() {
+  drawClockMarkers();
+  setClockLevel(_clockLevel);
+  updateClockHands();
+  setupClockDrag();
+}
+
+function drawClockMarkers() {
+  var g = document.getElementById('clockMarkers');
+  if (!g) return;
+  var html = '';
+  for (var i = 1; i <= 12; i++) {
+    var angle = (i * 30 - 90) * Math.PI / 180;
+    var x = 150 + 115 * Math.cos(angle);
+    var y = 150 + 115 * Math.sin(angle);
+    html += '<text x="' + x + '" y="' + (y + 6) + '" text-anchor="middle" font-size="20" font-weight="700" fill="#333" font-family="Fredoka One,cursive">' + i + '</text>';
+    // Tick marks
+    var tx1 = 150 + 130 * Math.cos(angle);
+    var ty1 = 150 + 130 * Math.sin(angle);
+    var tx2 = 150 + 138 * Math.cos(angle);
+    var ty2 = 150 + 138 * Math.sin(angle);
+    html += '<line x1="' + tx1 + '" y1="' + ty1 + '" x2="' + tx2 + '" y2="' + ty2 + '" stroke="#6C63FF" stroke-width="2"/>';
+  }
+  g.innerHTML = html;
+}
+
+function setClockLevel(lvl) {
+  _clockLevel = lvl;
+  var minHand = document.getElementById('clockMinuteHand');
+  var lvl1Btn = document.getElementById('clockLvl1Btn');
+  var lvl2Btn = document.getElementById('clockLvl2Btn');
+  if (lvl === 1) {
+    if (minHand) minHand.style.display = 'none';
+    _clockMinute = 0;
+    if (lvl1Btn) { lvl1Btn.className = 'btn btn-sm'; }
+    if (lvl2Btn) { lvl2Btn.className = 'btn btn-sm btn-outline'; }
+  } else {
+    if (minHand) minHand.style.display = '';
+    if (lvl1Btn) { lvl1Btn.className = 'btn btn-sm btn-outline'; }
+    if (lvl2Btn) { lvl2Btn.className = 'btn btn-sm'; }
+  }
+  updateClockHands();
+  updateClockDisplay();
+}
+
+function updateClockHands() {
+  var hourAngle = ((_clockHour % 12) * 30 + _clockMinute * 0.5) - 90;
+  var minAngle = (_clockMinute * 6) - 90;
+
+  var hx = 150 + 75 * Math.cos(hourAngle * Math.PI / 180);
+  var hy = 150 + 75 * Math.sin(hourAngle * Math.PI / 180);
+  var hourHand = document.getElementById('clockHourHand');
+  if (hourHand) { hourHand.setAttribute('x2', hx); hourHand.setAttribute('y2', hy); }
+
+  var mx = 150 + 100 * Math.cos(minAngle * Math.PI / 180);
+  var my = 150 + 100 * Math.sin(minAngle * Math.PI / 180);
+  var minHand = document.getElementById('clockMinuteHand');
+  if (minHand) { minHand.setAttribute('x2', mx); minHand.setAttribute('y2', my); }
+}
+
+function updateClockDisplay() {
+  var el = document.getElementById('clockTimeDisplay');
+  if (!el) return;
+  var h = _clockHour === 0 ? 12 : _clockHour;
+  var m = _clockMinute < 10 ? '0' + _clockMinute : '' + _clockMinute;
+  el.textContent = h + ' h ' + m;
+}
+
+function setupClockDrag() {
+  var svg = document.getElementById('clockSVG');
+  if (!svg) return;
+  if (svg._clockBound) return;
+  svg._clockBound = true;
+
+  function getAngle(e) {
+    var rect = svg.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    var dx = clientX - cx;
+    var dy = clientY - cy;
+    var angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+    if (angle < 0) angle += 360;
+    return angle;
+  }
+
+  function onStart(e) {
+    var target = e.target;
+    if (target.id === 'clockHourHand') _clockDragging = 'hour';
+    else if (target.id === 'clockMinuteHand') _clockDragging = 'minute';
+    else _clockDragging = 'hour'; // tap anywhere = move hour hand
+    e.preventDefault();
+    onMove(e);
+  }
+
+  function onMove(e) {
+    if (!_clockDragging) return;
+    e.preventDefault();
+    var angle = getAngle(e);
+
+    if (_clockDragging === 'hour') {
+      // Snap to nearest hour
+      var hour = Math.round(angle / 30) % 12;
+      if (hour === 0) hour = 12;
+      _clockHour = hour;
+      if (_clockLevel === 1) _clockMinute = 0;
+    } else if (_clockDragging === 'minute') {
+      // Snap to 0 or 30 (level 2)
+      var min = Math.round(angle / 6) % 60;
+      if (_clockLevel === 2) {
+        // Snap to 0 or 30
+        min = min < 15 ? 0 : min < 45 ? 30 : 0;
+        if (min === 0 && angle > 300) min = 0; // near 12
+      }
+      _clockMinute = min;
+    }
+
+    updateClockHands();
+    updateClockDisplay();
+  }
+
+  function onEnd() {
+    _clockDragging = null;
+  }
+
+  svg.addEventListener('mousedown', onStart);
+  svg.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+}
+
+function speakClockTime() {
+  var text = '';
+  var h = _clockHour === 0 ? 12 : _clockHour;
+  if (_clockMinute === 0) {
+    text = 'Il est ' + h + ' heure' + (h > 1 ? 's' : '');
+  } else if (_clockMinute === 30) {
+    text = 'Il est ' + h + ' heure' + (h > 1 ? 's' : '') + ' et demie';
+  } else {
+    text = 'Il est ' + h + ' heure' + (h > 1 ? 's' : '') + ' ' + _clockMinute;
+  }
+
+  var voice = ensureFrenchVoice();
+  var utter = new SpeechSynthesisUtterance(text);
+  if (voice) utter.voice = voice;
+  utter.lang = 'fr-FR';
+  utter.rate = 0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+// Quiz mode
+function startClockQuiz() {
+  var area = document.getElementById('clockQuizArea');
+  if (area) area.style.display = 'block';
+
+  // Generate random target time
+  var h = Math.floor(Math.random() * 12) + 1;
+  var m = _clockLevel === 1 ? 0 : (Math.random() < 0.5 ? 0 : 30);
+  _clockQuizTarget = { hour: h, minute: m };
+
+  var prompt = document.getElementById('clockQuizPrompt');
+  var timeStr = '';
+  if (m === 0) {
+    timeStr = h + ' heure' + (h > 1 ? 's' : '');
+  } else {
+    timeStr = h + ' heure' + (h > 1 ? 's' : '') + ' et demie';
+  }
+  if (prompt) prompt.textContent = 'Mets l\'horloge sur : ' + timeStr;
+
+  // Also speak it
+  var voice = ensureFrenchVoice();
+  var utter = new SpeechSynthesisUtterance('Mets l\'horloge sur ' + timeStr);
+  if (voice) utter.voice = voice;
+  utter.lang = 'fr-FR';
+  utter.rate = 0.85;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+
+  var fb = document.getElementById('clockQuizFeedback');
+  if (fb) fb.textContent = '';
+}
+
+function checkClockAnswer() {
+  if (!_clockQuizTarget) return;
+  var fb = document.getElementById('clockQuizFeedback');
+  var correct = (_clockHour % 12 === _clockQuizTarget.hour % 12) && (_clockMinute === _clockQuizTarget.minute);
+
+  if (correct) {
+    if (fb) { fb.textContent = '✅ Bravo ! C\'est correct !'; fb.style.color = '#28a745'; }
+    setTimeout(startClockQuiz, 2000);
+  } else {
+    if (fb) { fb.textContent = '❌ Essaie encore !'; fb.style.color = '#dc3545'; }
+  }
+}
+
 // === homework.js ===
 // ============================================
 // HOMEWORK MANAGEMENT
@@ -16754,7 +17132,7 @@ function endConjugaisonGame() {
 // ============================================
 
 // Global state
-let currentUser = null;
+// currentUser is declared in USER/PROFILE SYSTEM section above
 let currentGame = null;
 var lastGameStartFn = null;
 let currentLanguage = 'fr';
@@ -16771,6 +17149,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderWeeklyStatsWidget();
   renderGamiHomeUI();
   setupEventListeners();
+  appBoot();
 });
 
 // ============================================
