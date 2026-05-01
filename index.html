@@ -2157,10 +2157,10 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
         <div class="card-stripe" style="background:linear-gradient(90deg,#4CC9F0,#3A86FF)"></div>
         <div id="cpSonsStars" style="margin-top:6px;font-size:1.1rem;"></div>
       </div>
-      <div class="game-card" onclick="cpSyllabesStart()">
+      <div class="game-card" onclick="cpSylHubShow()">
         <div class="card-icon">🧩</div>
         <div class="card-title">Les Syllabes</div>
-        <div class="card-desc">Construis des mots</div>
+        <div class="card-desc">Apprends les syllabes</div>
         <div class="card-stripe" style="background:linear-gradient(90deg,#06D6A0,#118AB2)"></div>
         <div id="cpSyllabesStars" style="margin-top:6px;font-size:1.1rem;"></div>
       </div>
@@ -2192,18 +2192,58 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
     <div id="cpSonsFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
   </div>
 
-  <!-- CP SYLLABES GAME -->
-  <div class="screen" id="cpSyllabesGameScreen">
-    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpLectureScreen')">✕ Quitter</button></div>
+  <!-- CP SYLLABES HUB (Level + Mode Selection) -->
+  <div class="screen" id="cpSyllabesHubScreen">
+    <div class="back-link" onclick="showScreen('cpLectureScreen')">← Retour</div>
     <div class="logo">🧩 Les Syllabes</div>
-    <div id="cpSyllabesProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
-    <div id="cpSyllabesEmoji" style="text-align:center;font-size:4rem;margin:10px 0;"></div>
-    <div id="cpSyllabesSpeakBtn" style="text-align:center;margin:8px 0;">
-      <button class="btn btn-sm" onclick="cpSyllabesSpeakWord()" style="font-size:1rem;padding:8px 20px;">🔊 Écouter</button>
+    <p class="subtitle">Choisis un niveau et un jeu !</p>
+    <div id="cpSylHubContent" style="max-width:460px;margin:0 auto;padding:0 10px;"></div>
+  </div>
+
+  <!-- CP SYLLABES TABLE (Interactive Grid) -->
+  <div class="screen" id="cpSyllabesTableScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpSyllabesHubScreen')">✕ Quitter</button></div>
+    <div class="logo" id="cpSylTableTitle">📊 Le Tableau</div>
+    <div id="cpSylTableInfo" style="text-align:center;font-size:1rem;color:#666;margin:4px 0 8px;"></div>
+    <div id="cpSylTableGrid" style="overflow-x:auto;margin:0 auto;max-width:460px;padding:0 6px;"></div>
+    <div id="cpSylTableExample" style="text-align:center;margin:14px 0;min-height:70px;font-size:1.3rem;font-family:'Fredoka One',cursive;"></div>
+  </div>
+
+  <!-- CP SYLLABES BUILD (Construis) -->
+  <div class="screen" id="cpSyllabesBuildScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpSyllabesHubScreen')">✕ Quitter</button></div>
+    <div class="logo">🔨 Construis la syllabe</div>
+    <div id="cpSylBuildProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:6px 0;font-size:0.9rem;"></div>
+    <div id="cpSylBuildPrompt" style="text-align:center;margin:10px 0;">
+      <button class="btn" onclick="cpSylBuildSpeak()" style="font-size:1.2rem;padding:12px 28px;">🔊 Écouter la syllabe</button>
     </div>
-    <div id="cpSyllabesBuilt" style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--purple);margin:12px 0;min-height:50px;letter-spacing:2px;"></div>
-    <div id="cpSyllabesTiles" style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:15px auto;max-width:400px;"></div>
-    <div id="cpSyllabesFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
+    <div id="cpSylBuildBuilt" style="text-align:center;font-family:'Fredoka One',cursive;font-size:2.5rem;color:var(--purple);margin:10px 0;min-height:60px;letter-spacing:3px;"></div>
+    <div id="cpSylBuildConsonants" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:10px auto;max-width:420px;"></div>
+    <div style="text-align:center;font-size:0.9rem;color:#999;margin:6px 0;">+ voyelle</div>
+    <div id="cpSylBuildVowels" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:6px auto;max-width:420px;"></div>
+    <div id="cpSylBuildFeedback" style="text-align:center;font-size:1.6rem;margin-top:10px;min-height:55px;"></div>
+  </div>
+
+  <!-- CP SYLLABES LISTEN (Écoute et Trouve) -->
+  <div class="screen" id="cpSyllabesListenScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpSyllabesHubScreen')">✕ Quitter</button></div>
+    <div class="logo">👂 Écoute et Trouve</div>
+    <div id="cpSylListenProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:6px 0;font-size:0.9rem;"></div>
+    <div style="text-align:center;margin:12px 0;">
+      <button class="btn" onclick="cpSylListenSpeak()" style="font-size:1.2rem;padding:12px 28px;">🔊 Réécouter</button>
+    </div>
+    <div id="cpSylListenCards" style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:18px auto;max-width:400px;"></div>
+    <div id="cpSylListenFeedback" style="text-align:center;font-size:1.6rem;margin-top:12px;min-height:55px;"></div>
+  </div>
+
+  <!-- CP SYLLABES WORD (Dans quel mot?) -->
+  <div class="screen" id="cpSyllabesWordScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpSyllabesHubScreen')">✕ Quitter</button></div>
+    <div class="logo">🔍 Dans quel mot ?</div>
+    <div id="cpSylWordProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:6px 0;font-size:0.9rem;"></div>
+    <div id="cpSylWordTarget" style="text-align:center;font-family:'Fredoka One',cursive;font-size:2.8rem;color:#3A86FF;margin:14px 0;"></div>
+    <div id="cpSylWordCards" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin:14px auto;max-width:360px;"></div>
+    <div id="cpSylWordFeedback" style="text-align:center;font-size:1.6rem;margin-top:10px;min-height:55px;"></div>
   </div>
 
   <!-- CP LIRE DES MOTS GAME -->
@@ -16860,108 +16900,845 @@ function cpSonsAnswer(picked, correct) {
 }
 
 // ============================================
-// CP LECTURE: LES SYLLABES
+// CP LECTURE: LES SYLLABES — Comprehensive System
 // ============================================
-var cpSyllabesData = [
-  { word: 'bateau', syllables: ['ba','teau'], emoji: '🚢' },
-  { word: 'maman', syllables: ['ma','man'], emoji: '👩' },
-  { word: 'papa', syllables: ['pa','pa'], emoji: '👨' },
-  { word: 'lapin', syllables: ['la','pin'], emoji: '🐰' },
-  { word: 'chapeau', syllables: ['cha','peau'], emoji: '🎩' },
-  { word: 'maison', syllables: ['mai','son'], emoji: '🏠' },
-  { word: 'poisson', syllables: ['poi','sson'], emoji: '🐟' },
-  { word: 'voiture', syllables: ['voi','ture'], emoji: '🚗' },
-  { word: 'école', syllables: ['é','cole'], emoji: '🏫' },
-  { word: 'ami', syllables: ['a','mi'], emoji: '👦' },
-  { word: 'soleil', syllables: ['so','leil'], emoji: '☀️' },
-  { word: 'papillon', syllables: ['pa','pi','llon'], emoji: '🦋' },
-  { word: 'chocolat', syllables: ['cho','co','lat'], emoji: '🍫' },
-  { word: 'tomate', syllables: ['to','ma','te'], emoji: '🍅' },
-  { word: 'banane', syllables: ['ba','na','ne'], emoji: '🍌' },
-  { word: 'robot', syllables: ['ro','bot'], emoji: '🤖' },
-  { word: 'pirate', syllables: ['pi','ra','te'], emoji: '🏴‍☠️' },
-  { word: 'lune', syllables: ['lu','ne'], emoji: '🌙' },
-  { word: 'étoile', syllables: ['é','toi','le'], emoji: '⭐' },
-  { word: 'cadeau', syllables: ['ca','deau'], emoji: '🎁' },
-  { word: 'gâteau', syllables: ['gâ','teau'], emoji: '🎂' },
-  { word: 'mouton', syllables: ['mou','ton'], emoji: '🐑' },
-  { word: 'oiseau', syllables: ['oi','seau'], emoji: '🐦' },
-  { word: 'cheval', syllables: ['che','val'], emoji: '🐴' },
-  { word: 'canard', syllables: ['ca','nard'], emoji: '🦆' }
-];
-var cpSyllabesState = { words: [], current: 0, errors: 0, built: [], currentWord: null };
 
-function cpSyllabesStart() {
-  var picked = cpShuffle(cpSyllabesData).slice(0, 8);
-  cpSyllabesState.words = picked;
-  cpSyllabesState.current = 0;
-  cpSyllabesState.errors = 0;
-  showScreen('cpSyllabesGameScreen');
-  cpSyllabesShowWord();
+var CP_SYLLABES_DATA = {
+  levels: [
+    {
+      name: 'Les voyelles',
+      description: 'a, e, i, o, u, é, è',
+      sounds: [
+        { letter: 'a', examples: [{word:'avion', emoji:'✈️'}, {word:'arbre', emoji:'🌳'}] },
+        { letter: 'e', examples: [{word:'cerise', emoji:'🍒'}, {word:'petit', emoji:'🐣'}] },
+        { letter: 'i', examples: [{word:'igloo', emoji:'🏠'}, {word:'île', emoji:'🏝️'}] },
+        { letter: 'o', examples: [{word:'orange', emoji:'🍊'}, {word:'os', emoji:'🦴'}] },
+        { letter: 'u', examples: [{word:'usine', emoji:'🏭'}, {word:'uniforme', emoji:'👔'}] },
+        { letter: 'é', examples: [{word:'étoile', emoji:'⭐'}, {word:'été', emoji:'☀️'}] },
+        { letter: 'è', examples: [{word:'lèvre', emoji:'👄'}, {word:'chèvre', emoji:'🐐'}] }
+      ]
+    },
+    {
+      name: 'Consonnes continues',
+      description: 'l, r, m, s, f, v, n, j, z',
+      consonants: [
+        {
+          letter: 'l',
+          syllables: [
+            {syl:'la', examples:[{word:'lapin', emoji:'🐰'}, {word:'lait', emoji:'🥛'}]},
+            {syl:'le', examples:[{word:'le lit', emoji:'🛏️'}]},
+            {syl:'li', examples:[{word:'lion', emoji:'🦁'}, {word:'livre', emoji:'📕'}]},
+            {syl:'lo', examples:[{word:'loto', emoji:'🎲'}]},
+            {syl:'lu', examples:[{word:'lune', emoji:'🌙'}, {word:'lutin', emoji:'🧝'}]},
+            {syl:'lé', examples:[{word:'légo', emoji:'🧱'}]}
+          ]
+        },
+        {
+          letter: 'r',
+          syllables: [
+            {syl:'ra', examples:[{word:'radis', emoji:'🥕'}, {word:'raisin', emoji:'🍇'}]},
+            {syl:'re', examples:[{word:'renard', emoji:'🦊'}]},
+            {syl:'ri', examples:[{word:'rire', emoji:'😂'}, {word:'rivière', emoji:'🏞️'}]},
+            {syl:'ro', examples:[{word:'robot', emoji:'🤖'}, {word:'rose', emoji:'🌹'}]},
+            {syl:'ru', examples:[{word:'rue', emoji:'🛣️'}, {word:'ruche', emoji:'🐝'}]},
+            {syl:'ré', examples:[{word:'réveille', emoji:'⏰'}]}
+          ]
+        },
+        {
+          letter: 'm',
+          syllables: [
+            {syl:'ma', examples:[{word:'maman', emoji:'👩'}, {word:'maison', emoji:'🏠'}]},
+            {syl:'me', examples:[{word:'melon', emoji:'🍈'}]},
+            {syl:'mi', examples:[{word:'miel', emoji:'🍯'}, {word:'miroir', emoji:'🪞'}]},
+            {syl:'mo', examples:[{word:'moto', emoji:'🏍️'}, {word:'mouton', emoji:'🐑'}]},
+            {syl:'mu', examples:[{word:'mur', emoji:'🧱'}, {word:'musique', emoji:'🎵'}]},
+            {syl:'mé', examples:[{word:'médecin', emoji:'👨‍⚕️'}]}
+          ]
+        },
+        {
+          letter: 's',
+          syllables: [
+            {syl:'sa', examples:[{word:'sapin', emoji:'🌲'}, {word:'sac', emoji:'🎒'}]},
+            {syl:'se', examples:[{word:'serrure', emoji:'🔒'}]},
+            {syl:'si', examples:[{word:'singe', emoji:'🐒'}, {word:'sirène', emoji:'🧜'}]},
+            {syl:'so', examples:[{word:'soleil', emoji:'☀️'}, {word:'souris', emoji:'🐭'}]},
+            {syl:'su', examples:[{word:'sucre', emoji:'🍬'}, {word:'super', emoji:'💪'}]},
+            {syl:'sé', examples:[{word:'sécateur', emoji:'✂️'}]}
+          ]
+        },
+        {
+          letter: 'f',
+          syllables: [
+            {syl:'fa', examples:[{word:'famille', emoji:'👨‍👩‍👧'}, {word:'fantôme', emoji:'👻'}]},
+            {syl:'fe', examples:[{word:'fenêtre', emoji:'🪟'}]},
+            {syl:'fi', examples:[{word:'fille', emoji:'👧'}, {word:'fil', emoji:'🧵'}]},
+            {syl:'fo', examples:[{word:'forêt', emoji:'🌳'}, {word:'four', emoji:'🔥'}]},
+            {syl:'fu', examples:[{word:'fusée', emoji:'🚀'}, {word:'fumée', emoji:'💨'}]},
+            {syl:'fé', examples:[{word:'fée', emoji:'🧚'}]}
+          ]
+        },
+        {
+          letter: 'v',
+          syllables: [
+            {syl:'va', examples:[{word:'vache', emoji:'🐮'}, {word:'valise', emoji:'🧳'}]},
+            {syl:'ve', examples:[{word:'verre', emoji:'🥛'}]},
+            {syl:'vi', examples:[{word:'ville', emoji:'🏙️'}, {word:'violon', emoji:'🎻'}]},
+            {syl:'vo', examples:[{word:'voiture', emoji:'🚗'}, {word:'volcan', emoji:'🌋'}]},
+            {syl:'vu', examples:[{word:'vue', emoji:'👁️'}]},
+            {syl:'vé', examples:[{word:'vélo', emoji:'🚲'}]}
+          ]
+        },
+        {
+          letter: 'n',
+          syllables: [
+            {syl:'na', examples:[{word:'nappe', emoji:'🧣'}, {word:'nager', emoji:'🏊'}]},
+            {syl:'ne', examples:[{word:'neige', emoji:'❄️'}]},
+            {syl:'ni', examples:[{word:'nid', emoji:'🪺'}, {word:'niche', emoji:'🏠'}]},
+            {syl:'no', examples:[{word:'noix', emoji:'🌰'}, {word:'note', emoji:'🎶'}]},
+            {syl:'nu', examples:[{word:'nuage', emoji:'☁️'}]},
+            {syl:'né', examples:[{word:'nénuphar', emoji:'🌸'}]}
+          ]
+        },
+        {
+          letter: 'j',
+          syllables: [
+            {syl:'ja', examples:[{word:'jardin', emoji:'🌻'}, {word:'jambe', emoji:'🦵'}]},
+            {syl:'je', examples:[{word:'jeu', emoji:'🎮'}]},
+            {syl:'ji', examples:[{word:'jingle', emoji:'🔔'}]},
+            {syl:'jo', examples:[{word:'jouer', emoji:'⚽'}, {word:'joli', emoji:'💐'}]},
+            {syl:'ju', examples:[{word:'jupe', emoji:'👗'}, {word:'jus', emoji:'🧃'}]},
+            {syl:'jé', examples:[{word:'jésus', emoji:'✝️'}]}
+          ]
+        },
+        {
+          letter: 'z',
+          syllables: [
+            {syl:'za', examples:[{word:'zapper', emoji:'📺'}]},
+            {syl:'ze', examples:[{word:'zeste', emoji:'🍋'}]},
+            {syl:'zi', examples:[{word:'zigzag', emoji:'⚡'}]},
+            {syl:'zo', examples:[{word:'zoo', emoji:'🦒'}]},
+            {syl:'zu', examples:[{word:'zut', emoji:'😅'}]},
+            {syl:'zé', examples:[{word:'zéro', emoji:'0️⃣'}, {word:'zèbre', emoji:'🦓'}]}
+          ]
+        }
+      ]
+    },
+    {
+      name: 'Consonnes occlusives',
+      description: 'p, t, b, d, c, g, qu',
+      consonants: [
+        {
+          letter: 'p',
+          syllables: [
+            {syl:'pa', examples:[{word:'papa', emoji:'👨'}, {word:'panda', emoji:'🐼'}]},
+            {syl:'pe', examples:[{word:'petit', emoji:'🐣'}]},
+            {syl:'pi', examples:[{word:'pirate', emoji:'🏴‍☠️'}, {word:'pizza', emoji:'🍕'}]},
+            {syl:'po', examples:[{word:'pomme', emoji:'🍎'}, {word:'poisson', emoji:'🐟'}]},
+            {syl:'pu', examples:[{word:'puzzle', emoji:'🧩'}, {word:'pull', emoji:'🧶'}]},
+            {syl:'pé', examples:[{word:'pédale', emoji:'🚲'}]}
+          ]
+        },
+        {
+          letter: 't',
+          syllables: [
+            {syl:'ta', examples:[{word:'table', emoji:'🪑'}, {word:'tapis', emoji:'🟥'}]},
+            {syl:'te', examples:[{word:'terre', emoji:'🌍'}]},
+            {syl:'ti', examples:[{word:'tigre', emoji:'🐯'}, {word:'tirer', emoji:'🏹'}]},
+            {syl:'to', examples:[{word:'tomate', emoji:'🍅'}, {word:'tortue', emoji:'🐢'}]},
+            {syl:'tu', examples:[{word:'tulipe', emoji:'🌷'}, {word:'tube', emoji:'🧪'}]},
+            {syl:'té', examples:[{word:'télé', emoji:'📺'}]}
+          ]
+        },
+        {
+          letter: 'b',
+          syllables: [
+            {syl:'ba', examples:[{word:'bateau', emoji:'🚢'}, {word:'banane', emoji:'🍌'}]},
+            {syl:'be', examples:[{word:'bébé', emoji:'👶'}]},
+            {syl:'bi', examples:[{word:'bille', emoji:'🔵'}, {word:'bisou', emoji:'💋'}]},
+            {syl:'bo', examples:[{word:'bonbon', emoji:'🍭'}, {word:'bol', emoji:'🥣'}]},
+            {syl:'bu', examples:[{word:'bulle', emoji:'🫧'}, {word:'bureau', emoji:'🖥️'}]},
+            {syl:'bé', examples:[{word:'béret', emoji:'🎩'}]}
+          ]
+        },
+        {
+          letter: 'd',
+          syllables: [
+            {syl:'da', examples:[{word:'danse', emoji:'💃'}, {word:'dauphin', emoji:'🐬'}]},
+            {syl:'de', examples:[{word:'devoirs', emoji:'📝'}]},
+            {syl:'di', examples:[{word:'dinosaure', emoji:'🦕'}, {word:'dix', emoji:'🔟'}]},
+            {syl:'do', examples:[{word:'domino', emoji:'🁡'}, {word:'dormir', emoji:'😴'}]},
+            {syl:'du', examples:[{word:'dune', emoji:'🏖️'}]},
+            {syl:'dé', examples:[{word:'dé', emoji:'🎲'}]}
+          ]
+        },
+        {
+          letter: 'c',
+          syllables: [
+            {syl:'ca', examples:[{word:'cadeau', emoji:'🎁'}, {word:'canard', emoji:'🦆'}]},
+            {syl:'ke', examples:[{word:'kermesse', emoji:'🎪'}]},
+            {syl:'ki', examples:[{word:'kiwi', emoji:'🥝'}]},
+            {syl:'co', examples:[{word:'coq', emoji:'🐓'}, {word:'cochon', emoji:'🐷'}]},
+            {syl:'cu', examples:[{word:'cube', emoji:'🟦'}, {word:'cuillère', emoji:'🥄'}]},
+            {syl:'cé', examples:[{word:'céréale', emoji:'🥣'}]}
+          ]
+        },
+        {
+          letter: 'g',
+          syllables: [
+            {syl:'ga', examples:[{word:'gâteau', emoji:'🎂'}, {word:'garçon', emoji:'👦'}]},
+            {syl:'gue', examples:[{word:'guêpe', emoji:'🐝'}]},
+            {syl:'gui', examples:[{word:'guitare', emoji:'🎸'}]},
+            {syl:'go', examples:[{word:'gorille', emoji:'🦍'}]},
+            {syl:'gu', examples:[{word:'gourde', emoji:'🧴'}]},
+            {syl:'gué', examples:[{word:'guépard', emoji:'🐆'}]}
+          ]
+        },
+        {
+          letter: 'qu',
+          syllables: [
+            {syl:'qua', examples:[{word:'quatre', emoji:'4️⃣'}]},
+            {syl:'que', examples:[{word:'queue', emoji:'🐱'}]},
+            {syl:'qui', examples:[{word:'quille', emoji:'🎳'}]},
+            {syl:'quo', examples:[{word:'quotidien', emoji:'📰'}]},
+            {syl:'qué', examples:[{word:'quérir', emoji:'🔍'}]},
+            {syl:'qu', examples:[{word:'question', emoji:'❓'}]}
+          ]
+        }
+      ]
+    },
+    {
+      name: 'Sons complexes',
+      description: 'ch, ou, on, an, in, oi, au/eau, ai/ei',
+      complexSounds: [
+        { sound: 'ch', examples: [{word:'chat', emoji:'🐱'}, {word:'chocolat', emoji:'🍫'}, {word:'chapeau', emoji:'🎩'}, {word:'cheval', emoji:'🐴'}] },
+        { sound: 'ou', examples: [{word:'ours', emoji:'🐻'}, {word:'mouton', emoji:'🐑'}, {word:'poule', emoji:'🐔'}, {word:'loup', emoji:'🐺'}] },
+        { sound: 'on', examples: [{word:'bonbon', emoji:'🍭'}, {word:'maison', emoji:'🏠'}, {word:'mouton', emoji:'🐑'}, {word:'lion', emoji:'🦁'}] },
+        { sound: 'an', examples: [{word:'maman', emoji:'👩'}, {word:'éléphant', emoji:'🐘'}, {word:'blanc', emoji:'⬜'}, {word:'dent', emoji:'🦷'}] },
+        { sound: 'in', examples: [{word:'lapin', emoji:'🐰'}, {word:'sapin', emoji:'🌲'}, {word:'matin', emoji:'🌅'}, {word:'pain', emoji:'🍞'}] },
+        { sound: 'oi', examples: [{word:'oiseau', emoji:'🐦'}, {word:'roi', emoji:'👑'}, {word:'étoile', emoji:'⭐'}, {word:'voiture', emoji:'🚗'}] },
+        { sound: 'au/eau', examples: [{word:'bateau', emoji:'🚢'}, {word:'gâteau', emoji:'🎂'}, {word:'chapeau', emoji:'🎩'}, {word:'jaune', emoji:'🟡'}] },
+        { sound: 'ai/ei', examples: [{word:'lait', emoji:'🥛'}, {word:'baleine', emoji:'🐋'}, {word:'maître', emoji:'👨‍🏫'}, {word:'neige', emoji:'❄️'}] }
+      ]
+    },
+    {
+      name: 'Sons avancés',
+      description: 'ph, gn, gu, ge/gi, ce/ci, tion, ille, eur, ien, ain/ein',
+      complexSounds: [
+        { sound: 'ph', examples: [{word:'photo', emoji:'📷'}, {word:'phare', emoji:'🗼'}, {word:'éléphant', emoji:'🐘'}] },
+        { sound: 'gn', examples: [{word:'montagne', emoji:'🏔️'}, {word:'araignée', emoji:'🕷️'}, {word:'champignon', emoji:'🍄'}] },
+        { sound: 'gu', examples: [{word:'guitare', emoji:'🎸'}, {word:'guirlande', emoji:'🎊'}, {word:'bague', emoji:'💍'}] },
+        { sound: 'ge/gi', examples: [{word:'girafe', emoji:'🦒'}, {word:'bougie', emoji:'🕯️'}, {word:'géant', emoji:'🗿'}] },
+        { sound: 'ce/ci', examples: [{word:'cerise', emoji:'🍒'}, {word:'cinéma', emoji:'🎬'}, {word:'ciseaux', emoji:'✂️'}] },
+        { sound: 'tion', examples: [{word:'attention', emoji:'⚠️'}, {word:'addition', emoji:'➕'}, {word:'potion', emoji:'🧪'}] },
+        { sound: 'ille', examples: [{word:'fille', emoji:'👧'}, {word:'famille', emoji:'👨‍👩‍👧'}, {word:'papillon', emoji:'🦋'}] },
+        { sound: 'eur', examples: [{word:'fleur', emoji:'🌸'}, {word:'docteur', emoji:'👨‍⚕️'}, {word:'coeur', emoji:'❤️'}] },
+        { sound: 'ien', examples: [{word:'chien', emoji:'🐶'}, {word:'musicien', emoji:'🎵'}, {word:'bien', emoji:'👍'}] },
+        { sound: 'ain/ein', examples: [{word:'pain', emoji:'🍞'}, {word:'main', emoji:'✋'}, {word:'peinture', emoji:'🎨'}] }
+      ]
+    }
+  ]
+};
+
+// Words that contain specific syllables (for "Dans quel mot?" game)
+var CP_SYL_WORDS = {
+  'la': [{word:'lapin',emoji:'🐰'},{word:'salade',emoji:'🥗'},{word:'chocolat',emoji:'🍫'}],
+  'le': [{word:'le lit',emoji:'🛏️'},{word:'table',emoji:'🪑'},{word:'baleine',emoji:'🐋'}],
+  'li': [{word:'lion',emoji:'🦁'},{word:'livre',emoji:'📕'},{word:'joli',emoji:'💐'}],
+  'lo': [{word:'loto',emoji:'🎲'},{word:'vélo',emoji:'🚲'},{word:'ballon',emoji:'⚽'}],
+  'lu': [{word:'lune',emoji:'🌙'},{word:'lutin',emoji:'🧝'},{word:'plume',emoji:'🪶'}],
+  'lé': [{word:'légo',emoji:'🧱'},{word:'éléphant',emoji:'🐘'},{word:'télé',emoji:'📺'}],
+  'ra': [{word:'radis',emoji:'🥕'},{word:'raisin',emoji:'🍇'},{word:'pirate',emoji:'🏴‍☠️'}],
+  're': [{word:'renard',emoji:'🦊'},{word:'repas',emoji:'🍽️'},{word:'terre',emoji:'🌍'}],
+  'ri': [{word:'rire',emoji:'😂'},{word:'souris',emoji:'🐭'},{word:'cerise',emoji:'🍒'}],
+  'ro': [{word:'robot',emoji:'🤖'},{word:'rose',emoji:'🌹'},{word:'fromage',emoji:'🧀'}],
+  'ru': [{word:'rue',emoji:'🛣️'},{word:'ruche',emoji:'🐝'},{word:'fruit',emoji:'🍎'}],
+  'ré': [{word:'réveille',emoji:'⏰'},{word:'récré',emoji:'🏫'},{word:'féerique',emoji:'✨'}],
+  'ma': [{word:'maman',emoji:'👩'},{word:'maison',emoji:'🏠'},{word:'tomate',emoji:'🍅'}],
+  'me': [{word:'melon',emoji:'🍈'},{word:'merci',emoji:'🙏'},{word:'pomme',emoji:'🍎'}],
+  'mi': [{word:'miel',emoji:'🍯'},{word:'ami',emoji:'👦'},{word:'chemin',emoji:'🛤️'}],
+  'mo': [{word:'moto',emoji:'🏍️'},{word:'mouton',emoji:'🐑'},{word:'domino',emoji:'🁡'}],
+  'mu': [{word:'mur',emoji:'🧱'},{word:'musique',emoji:'🎵'},{word:'muguet',emoji:'🌸'}],
+  'mé': [{word:'médecin',emoji:'👨‍⚕️'},{word:'méchant',emoji:'😈'},{word:'caméra',emoji:'📹'}],
+  'sa': [{word:'sapin',emoji:'🌲'},{word:'sac',emoji:'🎒'},{word:'tisane',emoji:'🍵'}],
+  'se': [{word:'serrure',emoji:'🔒'},{word:'secret',emoji:'🤫'},{word:'insecte',emoji:'🐛'}],
+  'si': [{word:'singe',emoji:'🐒'},{word:'sirène',emoji:'🧜'},{word:'musique',emoji:'🎵'}],
+  'so': [{word:'soleil',emoji:'☀️'},{word:'souris',emoji:'🐭'},{word:'poisson',emoji:'🐟'}],
+  'su': [{word:'sucre',emoji:'🍬'},{word:'super',emoji:'💪'},{word:'dessus',emoji:'⬆️'}],
+  'sé': [{word:'sécateur',emoji:'✂️'},{word:'sécher',emoji:'☀️'},{word:'musée',emoji:'🏛️'}],
+  'fa': [{word:'famille',emoji:'👨‍👩‍👧'},{word:'fantôme',emoji:'👻'},{word:'sofa',emoji:'🛋️'}],
+  'fe': [{word:'fenêtre',emoji:'🪟'},{word:'ferme',emoji:'🏡'},{word:'café',emoji:'☕'}],
+  'fi': [{word:'fille',emoji:'👧'},{word:'fil',emoji:'🧵'},{word:'confiture',emoji:'🫙'}],
+  'fo': [{word:'forêt',emoji:'🌳'},{word:'four',emoji:'🔥'},{word:'téléphone',emoji:'📞'}],
+  'fu': [{word:'fusée',emoji:'🚀'},{word:'fumée',emoji:'💨'},{word:'parfum',emoji:'🌸'}],
+  'fé': [{word:'fée',emoji:'🧚'},{word:'félin',emoji:'🐱'},{word:'café',emoji:'☕'}],
+  'va': [{word:'vache',emoji:'🐮'},{word:'valise',emoji:'🧳'},{word:'cheval',emoji:'🐴'}],
+  've': [{word:'verre',emoji:'🥛'},{word:'vert',emoji:'🟢'},{word:'hiver',emoji:'❄️'}],
+  'vi': [{word:'ville',emoji:'🏙️'},{word:'violon',emoji:'🎻'},{word:'avion',emoji:'✈️'}],
+  'vo': [{word:'voiture',emoji:'🚗'},{word:'volcan',emoji:'🌋'},{word:'avoir',emoji:'✅'}],
+  'vu': [{word:'vue',emoji:'👁️'},{word:'revu',emoji:'👀'},{word:'revue',emoji:'📰'}],
+  'vé': [{word:'vélo',emoji:'🚲'},{word:'vérité',emoji:'✨'},{word:'pavé',emoji:'🟫'}],
+  'na': [{word:'nappe',emoji:'🧣'},{word:'nager',emoji:'🏊'},{word:'banane',emoji:'🍌'}],
+  'ne': [{word:'neige',emoji:'❄️'},{word:'nez',emoji:'👃'},{word:'lune',emoji:'🌙'}],
+  'ni': [{word:'nid',emoji:'🪺'},{word:'niche',emoji:'🏠'},{word:'panini',emoji:'🥪'}],
+  'no': [{word:'noix',emoji:'🌰'},{word:'note',emoji:'🎶'},{word:'piano',emoji:'🎹'}],
+  'nu': [{word:'nuage',emoji:'☁️'},{word:'nuit',emoji:'🌃'},{word:'menu',emoji:'📋'}],
+  'né': [{word:'nénuphar',emoji:'🌸'},{word:'née',emoji:'👶'},{word:'cheminée',emoji:'🏠'}],
+  'ja': [{word:'jardin',emoji:'🌻'},{word:'jambe',emoji:'🦵'},{word:'pyjama',emoji:'🩳'}],
+  'je': [{word:'jeu',emoji:'🎮'},{word:'jeter',emoji:'🗑️'},{word:'projet',emoji:'📋'}],
+  'ji': [{word:'jingle',emoji:'🔔'},{word:'magie',emoji:'🪄'},{word:'girafe',emoji:'🦒'}],
+  'jo': [{word:'jouer',emoji:'⚽'},{word:'joli',emoji:'💐'},{word:'bijou',emoji:'💎'}],
+  'ju': [{word:'jupe',emoji:'👗'},{word:'jus',emoji:'🧃'},{word:'bijou',emoji:'💎'}],
+  'pa': [{word:'papa',emoji:'👨'},{word:'panda',emoji:'🐼'},{word:'repas',emoji:'🍽️'}],
+  'pe': [{word:'petit',emoji:'🐣'},{word:'pelote',emoji:'🧶'},{word:'soupe',emoji:'🍲'}],
+  'pi': [{word:'pirate',emoji:'🏴‍☠️'},{word:'pizza',emoji:'🍕'},{word:'tapis',emoji:'🟥'}],
+  'po': [{word:'pomme',emoji:'🍎'},{word:'poisson',emoji:'🐟'},{word:'hippopotame',emoji:'🦛'}],
+  'pu': [{word:'puzzle',emoji:'🧩'},{word:'pull',emoji:'🧶'},{word:'compote',emoji:'🥣'}],
+  'pé': [{word:'pédale',emoji:'🚲'},{word:'pélican',emoji:'🦩'},{word:'pépite',emoji:'✨'}],
+  'ta': [{word:'table',emoji:'🪑'},{word:'tapis',emoji:'🟥'},{word:'guitare',emoji:'🎸'}],
+  'te': [{word:'terre',emoji:'🌍'},{word:'tête',emoji:'😊'},{word:'tomate',emoji:'🍅'}],
+  'ti': [{word:'tigre',emoji:'🐯'},{word:'tirer',emoji:'🏹'},{word:'petit',emoji:'🐣'}],
+  'to': [{word:'tomate',emoji:'🍅'},{word:'tortue',emoji:'🐢'},{word:'bateau',emoji:'🚢'}],
+  'tu': [{word:'tulipe',emoji:'🌷'},{word:'tube',emoji:'🧪'},{word:'voiture',emoji:'🚗'}],
+  'té': [{word:'télé',emoji:'📺'},{word:'téléphone',emoji:'📞'},{word:'pâté',emoji:'🥧'}],
+  'ba': [{word:'bateau',emoji:'🚢'},{word:'banane',emoji:'🍌'},{word:'cabane',emoji:'🏚️'}],
+  'be': [{word:'bébé',emoji:'👶'},{word:'bec',emoji:'🐦'},{word:'robe',emoji:'👗'}],
+  'bi': [{word:'bille',emoji:'🔵'},{word:'bisou',emoji:'💋'},{word:'cabine',emoji:'📞'}],
+  'bo': [{word:'bonbon',emoji:'🍭'},{word:'bol',emoji:'🥣'},{word:'robot',emoji:'🤖'}],
+  'bu': [{word:'bulle',emoji:'🫧'},{word:'bureau',emoji:'🖥️'},{word:'début',emoji:'🏁'}],
+  'bé': [{word:'béret',emoji:'🎩'},{word:'bébé',emoji:'👶'},{word:'libérer',emoji:'🔓'}],
+  'da': [{word:'danse',emoji:'💃'},{word:'dauphin',emoji:'🐬'},{word:'panda',emoji:'🐼'}],
+  'de': [{word:'devoirs',emoji:'📝'},{word:'dent',emoji:'🦷'},{word:'monde',emoji:'🌍'}],
+  'di': [{word:'dinosaure',emoji:'🦕'},{word:'dix',emoji:'🔟'},{word:'lundi',emoji:'📅'}],
+  'do': [{word:'domino',emoji:'🁡'},{word:'dormir',emoji:'😴'},{word:'cadeau',emoji:'🎁'}],
+  'du': [{word:'dune',emoji:'🏖️'},{word:'dur',emoji:'🪨'},{word:'perdu',emoji:'🗺️'}],
+  'dé': [{word:'dé',emoji:'🎲'},{word:'déjeuner',emoji:'🍽️'},{word:'idée',emoji:'💡'}],
+  'ca': [{word:'cadeau',emoji:'🎁'},{word:'canard',emoji:'🦆'},{word:'école',emoji:'🏫'}],
+  'co': [{word:'coq',emoji:'🐓'},{word:'cochon',emoji:'🐷'},{word:'chocolat',emoji:'🍫'}],
+  'cu': [{word:'cube',emoji:'🟦'},{word:'cuillère',emoji:'🥄'},{word:'reculer',emoji:'⬅️'}],
+  'ga': [{word:'gâteau',emoji:'🎂'},{word:'garçon',emoji:'👦'},{word:'escargot',emoji:'🐌'}],
+  'go': [{word:'gorille',emoji:'🦍'},{word:'gomme',emoji:'🧽'},{word:'dragon',emoji:'🐉'}],
+  'gu': [{word:'gourde',emoji:'🧴'},{word:'guêpe',emoji:'🐝'},{word:'figure',emoji:'😊'}]
+};
+
+// Vowels for the syllable table
+var CP_SYL_VOWELS = ['a', 'e', 'i', 'o', 'u', 'é'];
+
+// Game state
+var cpSylState = {
+  level: 0,
+  mode: '',
+  round: 0,
+  score: 0,
+  target: null,
+  selectedConsonant: null,
+  questions: []
+};
+
+// ---- Hub Screen ----
+function cpSylHubShow() {
+  showScreen('cpSyllabesHubScreen');
+  var c = document.getElementById('cpSylHubContent');
+  var html = '';
+  var lvColors = ['#FF6B9D','#4CC9F0','#06D6A0','#FFB703','#9B5DE5'];
+  var lvIcons = ['🔤','📗','📘','📙','📕'];
+  for (var i = 0; i < CP_SYLLABES_DATA.levels.length; i++) {
+    var lv = CP_SYLLABES_DATA.levels[i];
+    html += '<div style="background:linear-gradient(135deg,#fff,' + lvColors[i] + '22);border-radius:18px;padding:14px 16px;margin-bottom:14px;border:2px solid ' + lvColors[i] + '44;">';
+    html += '<div style="font-family:\'Fredoka One\',cursive;font-size:1.2rem;color:' + lvColors[i] + ';">' + lvIcons[i] + ' Niveau ' + (i+1) + ' — ' + lv.name + '</div>';
+    html += '<div style="font-size:0.85rem;color:#666;margin:2px 0 10px;">' + lv.description + '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    if (lv.consonants || lv.sounds) {
+      html += '<button class="btn btn-sm" onclick="cpSylTableStart(' + i + ')" style="border-radius:14px;padding:8px 14px;font-size:0.85rem;background:' + lvColors[i] + ';border-color:' + lvColors[i] + ';">📊 Tableau</button>';
+    }
+    if (lv.complexSounds) {
+      html += '<button class="btn btn-sm" onclick="cpSylTableStart(' + i + ')" style="border-radius:14px;padding:8px 14px;font-size:0.85rem;background:' + lvColors[i] + ';border-color:' + lvColors[i] + ';">📊 Explorer</button>';
+    }
+    if (lv.consonants) {
+      html += '<button class="btn btn-sm" onclick="cpSylBuildStart(' + i + ')" style="border-radius:14px;padding:8px 14px;font-size:0.85rem;background:' + lvColors[i] + ';border-color:' + lvColors[i] + ';">🔨 Construis</button>';
+    }
+    html += '<button class="btn btn-sm" onclick="cpSylListenStart(' + i + ')" style="border-radius:14px;padding:8px 14px;font-size:0.85rem;background:' + lvColors[i] + ';border-color:' + lvColors[i] + ';">👂 Écoute</button>';
+    html += '<button class="btn btn-sm" onclick="cpSylWordStart(' + i + ')" style="border-radius:14px;padding:8px 14px;font-size:0.85rem;background:' + lvColors[i] + ';border-color:' + lvColors[i] + ';">🔍 Mot</button>';
+    html += '</div></div>';
+  }
+  c.innerHTML = html;
 }
 
-function cpSyllabesShowWord() {
-  var s = cpSyllabesState;
-  if (s.current >= s.words.length) {
-    var stars = s.errors <= 2 ? 3 : s.errors <= 4 ? 2 : 1;
-    cpSaveBestStars('cpSyllabesBest', stars);
-    var score = Math.max(0, (s.words.length - s.errors)) * 10;
-    lastGameStartFn = function() { cpSyllabesStart(); };
-    showEndScreen(score, stars, s.errors <= 2 ? 'Excellent ! Tu sais construire les mots ! 🎉' : s.errors <= 4 ? 'Bien joué ! 😊' : 'Continue à t\'entraîner ! 💪');
+// ---- Helper: get all syllables for a level (and below) ----
+function cpSylGetSyllables(levelIdx) {
+  var syls = [];
+  for (var lvI = 0; lvI <= levelIdx; lvI++) {
+    var lv = CP_SYLLABES_DATA.levels[lvI];
+    if (lv.sounds) {
+      for (var s = 0; s < lv.sounds.length; s++) {
+        syls.push({syl: lv.sounds[s].letter, examples: lv.sounds[s].examples, type:'vowel'});
+      }
+    }
+    if (lv.consonants) {
+      for (var c = 0; c < lv.consonants.length; c++) {
+        for (var sl = 0; sl < lv.consonants[c].syllables.length; sl++) {
+          syls.push({syl: lv.consonants[c].syllables[sl].syl, examples: lv.consonants[c].syllables[sl].examples, type:'syllable', consonant: lv.consonants[c].letter});
+        }
+      }
+    }
+    if (lv.complexSounds) {
+      for (var cs = 0; cs < lv.complexSounds.length; cs++) {
+        syls.push({syl: lv.complexSounds[cs].sound, examples: lv.complexSounds[cs].examples, type:'complex'});
+      }
+    }
+  }
+  return syls;
+}
+
+// Get syllables ONLY for a specific level
+function cpSylGetLevelSyllables(levelIdx) {
+  var syls = [];
+  var lv = CP_SYLLABES_DATA.levels[levelIdx];
+  if (lv.sounds) {
+    for (var s = 0; s < lv.sounds.length; s++) {
+      syls.push({syl: lv.sounds[s].letter, examples: lv.sounds[s].examples, type:'vowel'});
+    }
+  }
+  if (lv.consonants) {
+    for (var c = 0; c < lv.consonants.length; c++) {
+      for (var sl = 0; sl < lv.consonants[c].syllables.length; sl++) {
+        syls.push({syl: lv.consonants[c].syllables[sl].syl, examples: lv.consonants[c].syllables[sl].examples, type:'syllable', consonant: lv.consonants[c].letter});
+      }
+    }
+  }
+  if (lv.complexSounds) {
+    for (var cs = 0; cs < lv.complexSounds.length; cs++) {
+      syls.push({syl: lv.complexSounds[cs].sound, examples: lv.complexSounds[cs].examples, type:'complex'});
+    }
+  }
+  return syls;
+}
+
+// Get consonants for a level
+function cpSylGetConsonants(levelIdx) {
+  var cons = [];
+  for (var lvI = 0; lvI <= levelIdx; lvI++) {
+    var lv = CP_SYLLABES_DATA.levels[lvI];
+    if (lv.consonants) {
+      for (var c = 0; c < lv.consonants.length; c++) {
+        cons.push(lv.consonants[c].letter);
+      }
+    }
+  }
+  return cons;
+}
+
+// ============================================
+// MODE 1: LE TABLEAU (Syllable Table)
+// ============================================
+function cpSylTableStart(levelIdx) {
+  cpSylState.level = levelIdx;
+  var lv = CP_SYLLABES_DATA.levels[levelIdx];
+  showScreen('cpSyllabesTableScreen');
+  document.getElementById('cpSylTableTitle').textContent = '📊 ' + lv.name;
+  document.getElementById('cpSylTableInfo').textContent = lv.description;
+  document.getElementById('cpSylTableExample').innerHTML = '<span style="color:#999;">Touche une case pour écouter !</span>';
+
+  var grid = document.getElementById('cpSylTableGrid');
+
+  // Level 0: vowels only - simple grid
+  if (lv.sounds) {
+    var html = '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;">';
+    for (var s = 0; s < lv.sounds.length; s++) {
+      var snd = lv.sounds[s];
+      html += '<button onclick="cpSylTableTap(\'' + snd.letter + '\', ' + JSON.stringify(snd.examples).replace(/'/g, "\\'").replace(/"/g, '&quot;') + ')" ';
+      html += 'style="width:70px;height:70px;border-radius:50%;font-size:2rem;font-family:\'Fredoka One\',cursive;border:3px solid #FF6B9D;background:#fff0f5;color:#FF6B9D;cursor:pointer;transition:all 0.2s;" ';
+      html += 'onmouseover="this.style.transform=\'scale(1.1)\'" onmouseout="this.style.transform=\'none\'">';
+      html += snd.letter + '</button>';
+    }
+    html += '</div>';
+    grid.innerHTML = html;
     return;
   }
-  s.currentWord = s.words[s.current];
-  s.built = [];
-  document.getElementById('cpSyllabesProgress').textContent = 'Mot ' + (s.current + 1) + ' / ' + s.words.length;
-  document.getElementById('cpSyllabesEmoji').textContent = s.currentWord.emoji;
-  document.getElementById('cpSyllabesBuilt').textContent = '';
-  document.getElementById('cpSyllabesFeedback').textContent = '';
 
-  var scrambled = cpShuffle(s.currentWord.syllables.slice());
-  var container = document.getElementById('cpSyllabesTiles');
-  container.innerHTML = '';
-  scrambled.forEach(function(syl) {
+  // Levels 4-5: complex sounds - card layout
+  if (lv.complexSounds) {
+    var html = '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;">';
+    for (var cs = 0; cs < lv.complexSounds.length; cs++) {
+      var snd = lv.complexSounds[cs];
+      html += '<button onclick="cpSylTableTap(\'' + snd.sound.replace(/'/g, "\\'") + '\', ' + JSON.stringify(snd.examples).replace(/'/g, "\\'").replace(/"/g, '&quot;') + ')" ';
+      html += 'style="min-width:80px;height:65px;border-radius:16px;font-size:1.5rem;font-family:\'Fredoka One\',cursive;border:3px solid #9B5DE5;background:#f5f0ff;color:#9B5DE5;cursor:pointer;padding:8px 14px;transition:all 0.2s;" ';
+      html += 'onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'none\'">';
+      html += snd.sound + '</button>';
+    }
+    html += '</div>';
+    grid.innerHTML = html;
+    return;
+  }
+
+  // Levels 2-3: consonant × vowel table
+  if (lv.consonants) {
+    var vowels = CP_SYL_VOWELS;
+    var html = '<table style="border-collapse:separate;border-spacing:4px;margin:0 auto;width:100%;">';
+    // Header row with vowels
+    html += '<tr><td></td>';
+    for (var v = 0; v < vowels.length; v++) {
+      html += '<td style="text-align:center;"><span style="display:inline-block;width:42px;height:42px;line-height:42px;border-radius:50%;background:#FF6B9D;color:#fff;font-family:\'Fredoka One\',cursive;font-size:1.1rem;">' + vowels[v] + '</span></td>';
+    }
+    html += '</tr>';
+    // Rows for each consonant
+    for (var c = 0; c < lv.consonants.length; c++) {
+      var cons = lv.consonants[c];
+      html += '<tr>';
+      html += '<td style="text-align:center;"><span style="display:inline-block;width:42px;height:42px;line-height:42px;border-radius:50%;background:#3A86FF;color:#fff;font-family:\'Fredoka One\',cursive;font-size:1.1rem;">' + cons.letter + '</span></td>';
+      for (var v = 0; v < vowels.length; v++) {
+        var found = null;
+        for (var sl = 0; sl < cons.syllables.length; sl++) {
+          if (cons.syllables[sl].syl === cons.letter + vowels[v]) {
+            found = cons.syllables[sl];
+            break;
+          }
+        }
+        if (!found) {
+          // Try to find a syllable that matches this vowel position
+          for (var sl = 0; sl < cons.syllables.length; sl++) {
+            if (v < cons.syllables.length && sl === v) {
+              found = cons.syllables[sl];
+              break;
+            }
+          }
+        }
+        if (found) {
+          html += '<td><button onclick="cpSylTableTap(\'' + found.syl.replace(/'/g, "\\'") + '\', ' + JSON.stringify(found.examples).replace(/'/g, "\\'").replace(/"/g, '&quot;') + ', \'' + cons.letter.replace(/'/g, "\\'") + '\', \'' + vowels[v] + '\')" ';
+          html += 'style="width:100%;min-width:44px;height:44px;border-radius:12px;font-size:1rem;font-family:\'Fredoka One\',cursive;border:2px solid #e0e0e0;background:#fff;color:#333;cursor:pointer;transition:all 0.2s;" ';
+          html += 'onmouseover="this.style.background=\'#e8f4ff\';this.style.borderColor=\'#3A86FF\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#e0e0e0\'">';
+          html += found.syl + '</button></td>';
+        } else {
+          html += '<td style="text-align:center;color:#ccc;font-size:0.9rem;">—</td>';
+        }
+      }
+      html += '</tr>';
+    }
+    html += '</table>';
+    grid.innerHTML = html;
+  }
+}
+
+function cpSylTableTap(syl, examples, consonant, vowel) {
+  var ex = (typeof examples === 'string') ? JSON.parse(examples) : examples;
+  var exDiv = document.getElementById('cpSylTableExample');
+  var pick = ex[Math.floor(Math.random() * ex.length)];
+
+  var formula = '';
+  if (consonant && vowel) {
+    formula = '<span style="color:#3A86FF;">' + consonant + '</span> + <span style="color:#FF6B9D;">' + vowel + '</span> = <span style="color:var(--purple);font-size:1.5rem;">' + syl + '</span>';
+  } else {
+    formula = '<span style="color:var(--purple);font-size:1.5rem;">' + syl + '</span>';
+  }
+  exDiv.innerHTML = formula + '<br><span style="font-size:2rem;">' + pick.emoji + '</span> <span style="color:#333;">comme dans <strong>' + pick.word + '</strong></span>';
+
+  // Speak: first the formula, then "comme dans [word]"
+  if (consonant && vowel) {
+    cpSpeak(consonant + '... ' + vowel + '... ' + syl + '! comme dans ' + pick.word, 0.75);
+  } else {
+    cpSpeak(syl + '! comme dans ' + pick.word, 0.75);
+  }
+}
+
+// ============================================
+// MODE 2: CONSTRUIS (Build the Syllable)
+// ============================================
+function cpSylBuildStart(levelIdx) {
+  cpSylState.level = levelIdx;
+  cpSylState.mode = 'build';
+  cpSylState.round = 0;
+  cpSylState.score = 0;
+  cpSylState.selectedConsonant = null;
+
+  // Get syllables from this level that are consonant+vowel type
+  var syls = cpSylGetLevelSyllables(levelIdx);
+  var filtered = [];
+  for (var i = 0; i < syls.length; i++) {
+    if (syls[i].type === 'syllable') filtered.push(syls[i]);
+  }
+  cpSylState.questions = cpShuffle(filtered).slice(0, 10);
+  showScreen('cpSyllabesBuildScreen');
+  cpSylBuildShow();
+}
+
+function cpSylBuildShow() {
+  var s = cpSylState;
+  if (s.round >= s.questions.length) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpSyllabesBest', stars);
+    lastGameStartFn = function() { cpSylBuildStart(s.level); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Bravo ! Tu construis super bien ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue à t\'entraîner ! 💪');
+    return;
+  }
+
+  s.target = s.questions[s.round];
+  s.selectedConsonant = null;
+  document.getElementById('cpSylBuildProgress').textContent = 'Question ' + (s.round + 1) + ' / ' + s.questions.length;
+  document.getElementById('cpSylBuildBuilt').textContent = '?';
+  document.getElementById('cpSylBuildFeedback').textContent = '';
+
+  // Build consonant buttons — include consonants from the level
+  var cons = cpSylGetConsonants(s.level);
+  // Make sure target consonant is included, add some distractors
+  var used = [s.target.consonant];
+  var others = cpShuffle(cons);
+  for (var i = 0; i < others.length && used.length < Math.min(6, cons.length); i++) {
+    if (used.indexOf(others[i]) === -1) used.push(others[i]);
+  }
+  used = cpShuffle(used);
+
+  var consDiv = document.getElementById('cpSylBuildConsonants');
+  consDiv.innerHTML = '';
+  for (var i = 0; i < used.length; i++) {
     var btn = document.createElement('button');
     btn.className = 'btn btn-outline';
-    btn.style.cssText = 'font-size:1.4rem;padding:12px 22px;border-radius:14px;font-family:"Fredoka One",cursive;';
-    btn.textContent = syl;
-    btn.onclick = function() { cpSyllabesTap(syl, btn); };
-    container.appendChild(btn);
-  });
+    btn.style.cssText = 'font-size:1.4rem;padding:12px 20px;border-radius:14px;font-family:"Fredoka One",cursive;min-width:54px;min-height:54px;border-color:#3A86FF;color:#3A86FF;';
+    btn.textContent = used[i];
+    btn.setAttribute('data-cons', used[i]);
+    btn.onclick = (function(c, b) { return function() { cpSylBuildPickConsonant(c, b); }; })(used[i], btn);
+    consDiv.appendChild(btn);
+  }
 
-  setTimeout(function() { cpSyllabesSpeakWord(); }, 400);
+  // Vowel buttons
+  var vowDiv = document.getElementById('cpSylBuildVowels');
+  vowDiv.innerHTML = '';
+  for (var v = 0; v < CP_SYL_VOWELS.length; v++) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.4rem;padding:12px 20px;border-radius:14px;font-family:"Fredoka One",cursive;min-width:54px;min-height:54px;border-color:#FF6B9D;color:#FF6B9D;';
+    btn.textContent = CP_SYL_VOWELS[v];
+    btn.onclick = (function(vow) { return function() { cpSylBuildPickVowel(vow); }; })(CP_SYL_VOWELS[v]);
+    vowDiv.appendChild(btn);
+  }
+
+  // Speak the target syllable after a short delay
+  setTimeout(function() { cpSylBuildSpeak(); }, 500);
 }
 
-function cpSyllabesSpeakWord() {
-  if (cpSyllabesState.currentWord) {
-    cpSpeak(cpSyllabesState.currentWord.word, 0.8);
+function cpSylBuildSpeak() {
+  if (cpSylState.target) {
+    cpSpeak(cpSylState.target.syl, 0.7);
   }
 }
 
-function cpSyllabesTap(syl, btn) {
-  var s = cpSyllabesState;
-  var expected = s.currentWord.syllables[s.built.length];
-  var fb = document.getElementById('cpSyllabesFeedback');
+function cpSylBuildPickConsonant(c, btn) {
+  cpSylState.selectedConsonant = c;
+  // Highlight selected
+  var allBtns = document.getElementById('cpSylBuildConsonants').children;
+  for (var i = 0; i < allBtns.length; i++) {
+    allBtns[i].style.background = '';
+    allBtns[i].style.color = '#3A86FF';
+  }
+  btn.style.background = '#3A86FF';
+  btn.style.color = '#fff';
+  document.getElementById('cpSylBuildBuilt').textContent = c + ' + ?';
+  cpSpeak(c, 0.7);
+}
 
-  if (syl === expected) {
-    s.built.push(syl);
-    btn.disabled = true;
-    btn.style.opacity = '0.3';
-    document.getElementById('cpSyllabesBuilt').textContent = s.built.join('-');
+function cpSylBuildPickVowel(v) {
+  var s = cpSylState;
+  if (!s.selectedConsonant) {
+    document.getElementById('cpSylBuildFeedback').innerHTML = '<span style="color:#FFB703;">Choisis d\'abord une consonne !</span>';
+    setTimeout(function() { document.getElementById('cpSylBuildFeedback').textContent = ''; }, 1200);
+    return;
+  }
 
-    if (s.built.length === s.currentWord.syllables.length) {
-      fb.textContent = '🎉 ' + s.currentWord.word + ' !';
-      fb.style.color = '#06D6A0';
-      cpSpeak(s.currentWord.word, 0.9);
-      s.current++;
-      setTimeout(function() { cpSyllabesShowWord(); }, 1500);
-    }
+  var built = s.selectedConsonant + v;
+  document.getElementById('cpSylBuildBuilt').textContent = built;
+  var fb = document.getElementById('cpSylBuildFeedback');
+
+  if (built === s.target.syl) {
+    s.score++;
+    var ex = s.target.examples[Math.floor(Math.random() * s.target.examples.length)];
+    fb.innerHTML = '<span style="color:#06D6A0;">✅ Bravo ! ' + ex.emoji + ' ' + ex.word + ' !</span>';
+    cpSpeak(built + '! comme dans ' + ex.word, 0.8);
+    s.round++;
+    setTimeout(function() { cpSylBuildShow(); }, 2000);
   } else {
-    s.errors++;
-    fb.textContent = '❌ Essaie encore !';
-    fb.style.color = '#FF6B9D';
-    setTimeout(function() { fb.textContent = ''; }, 800);
+    fb.innerHTML = '<span style="color:#FF6B9D;">❌ Essaie encore !</span>';
+    s.selectedConsonant = null;
+    // Reset consonant highlight
+    var allBtns = document.getElementById('cpSylBuildConsonants').children;
+    for (var i = 0; i < allBtns.length; i++) {
+      allBtns[i].style.background = '';
+      allBtns[i].style.color = '#3A86FF';
+    }
+    document.getElementById('cpSylBuildBuilt').textContent = '?';
+    setTimeout(function() { fb.textContent = ''; }, 1000);
   }
+}
+
+// ============================================
+// MODE 3: ÉCOUTE ET TROUVE (Listen and Find)
+// ============================================
+function cpSylListenStart(levelIdx) {
+  cpSylState.level = levelIdx;
+  cpSylState.mode = 'listen';
+  cpSylState.round = 0;
+  cpSylState.score = 0;
+
+  var syls = cpSylGetLevelSyllables(levelIdx);
+  cpSylState.questions = cpShuffle(syls).slice(0, 10);
+  showScreen('cpSyllabesListenScreen');
+  cpSylListenShow();
+}
+
+function cpSylListenShow() {
+  var s = cpSylState;
+  if (s.round >= s.questions.length) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpSyllabesBest', stars);
+    lastGameStartFn = function() { cpSylListenStart(s.level); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Super oreille ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue à écouter ! 💪');
+    return;
+  }
+
+  s.target = s.questions[s.round];
+  document.getElementById('cpSylListenProgress').textContent = 'Question ' + (s.round + 1) + ' / ' + s.questions.length;
+  document.getElementById('cpSylListenFeedback').textContent = '';
+
+  // Get 3 distractors from same level
+  var allSyls = cpSylGetLevelSyllables(s.level);
+  var choices = [s.target];
+  var shuffled = cpShuffle(allSyls);
+  for (var i = 0; i < shuffled.length && choices.length < 4; i++) {
+    if (shuffled[i].syl !== s.target.syl) choices.push(shuffled[i]);
+  }
+  choices = cpShuffle(choices);
+
+  var container = document.getElementById('cpSylListenCards');
+  container.innerHTML = '';
+  for (var i = 0; i < choices.length; i++) {
+    var card = document.createElement('button');
+    card.className = 'btn btn-outline';
+    card.style.cssText = 'font-size:1.8rem;padding:18px 28px;border-radius:18px;font-family:"Fredoka One",cursive;min-width:100px;min-height:60px;transition:all 0.2s;';
+    card.textContent = choices[i].syl;
+    card.onclick = (function(ch) { return function() { cpSylListenAnswer(ch); }; })(choices[i]);
+    container.appendChild(card);
+  }
+
+  // Speak after delay
+  setTimeout(function() { cpSylListenSpeak(); }, 500);
+}
+
+function cpSylListenSpeak() {
+  if (cpSylState.target) {
+    cpSpeak(cpSylState.target.syl, 0.65);
+  }
+}
+
+function cpSylListenAnswer(chosen) {
+  var s = cpSylState;
+  var fb = document.getElementById('cpSylListenFeedback');
+  if (chosen.syl === s.target.syl) {
+    s.score++;
+    var ex = s.target.examples[Math.floor(Math.random() * s.target.examples.length)];
+    fb.innerHTML = '<span style="color:#06D6A0;">✅ Bravo ! ' + ex.emoji + ' ' + ex.word + '</span>';
+    cpSpeak(s.target.syl + '! comme dans ' + ex.word, 0.8);
+    s.round++;
+    setTimeout(function() { cpSylListenShow(); }, 1800);
+  } else {
+    fb.innerHTML = '<span style="color:#FF6B9D;">❌ C\'est « ' + s.target.syl + ' » !</span>';
+    s.round++;
+    setTimeout(function() { cpSylListenShow(); }, 1500);
+  }
+}
+
+// ============================================
+// MODE 4: DANS QUEL MOT? (Which Word?)
+// ============================================
+function cpSylWordStart(levelIdx) {
+  cpSylState.level = levelIdx;
+  cpSylState.mode = 'word';
+  cpSylState.round = 0;
+  cpSylState.score = 0;
+
+  // Get syllables that have entries in CP_SYL_WORDS
+  var syls = cpSylGetLevelSyllables(levelIdx);
+  var valid = [];
+  for (var i = 0; i < syls.length; i++) {
+    if (CP_SYL_WORDS[syls[i].syl]) valid.push(syls[i]);
+  }
+  cpSylState.questions = cpShuffle(valid).slice(0, 10);
+  showScreen('cpSyllabesWordScreen');
+  cpSylWordShow();
+}
+
+function cpSylWordShow() {
+  var s = cpSylState;
+  if (s.round >= s.questions.length) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpSyllabesBest', stars);
+    lastGameStartFn = function() { cpSylWordStart(s.level); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Excellent ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue ! 💪');
+    return;
+  }
+
+  s.target = s.questions[s.round];
+  var targetSyl = s.target.syl;
+  document.getElementById('cpSylWordProgress').textContent = 'Question ' + (s.round + 1) + ' / ' + s.questions.length;
+  document.getElementById('cpSylWordTarget').textContent = targetSyl;
+  document.getElementById('cpSylWordFeedback').textContent = '';
+
+  // Get correct word (contains the syllable)
+  var correctWords = CP_SYL_WORDS[targetSyl];
+  if (!correctWords || correctWords.length === 0) {
+    s.round++;
+    cpSylWordShow();
+    return;
+  }
+  var correct = correctWords[Math.floor(Math.random() * correctWords.length)];
+
+  // Get 2 distractor words from OTHER syllables
+  var allKeys = Object.keys(CP_SYL_WORDS);
+  var distractors = [];
+  var shuffledKeys = cpShuffle(allKeys);
+  for (var i = 0; i < shuffledKeys.length && distractors.length < 2; i++) {
+    if (shuffledKeys[i] !== targetSyl) {
+      var dWords = CP_SYL_WORDS[shuffledKeys[i]];
+      // Make sure the distractor doesn't contain the target syllable
+      var dWord = dWords[Math.floor(Math.random() * dWords.length)];
+      if (dWord.word.toLowerCase().indexOf(targetSyl) === -1) {
+        distractors.push(dWord);
+      }
+    }
+  }
+
+  var choices = cpShuffle([correct].concat(distractors));
+
+  var container = document.getElementById('cpSylWordCards');
+  container.innerHTML = '';
+  for (var i = 0; i < choices.length; i++) {
+    var card = document.createElement('button');
+    card.className = 'btn btn-outline';
+    card.style.cssText = 'width:100%;font-size:1.3rem;padding:16px 20px;border-radius:16px;font-family:"Fredoka One",cursive;display:flex;align-items:center;justify-content:center;gap:12px;min-height:58px;transition:all 0.2s;';
+    card.innerHTML = '<span style="font-size:2rem;">' + choices[i].emoji + '</span> ' + choices[i].word;
+    card.onclick = (function(ch, corr) { return function() { cpSylWordAnswer(ch, corr); }; })(choices[i], correct);
+    container.appendChild(card);
+  }
+
+  // Speak the target syllable
+  setTimeout(function() { cpSpeak('Trouve le mot avec ' + targetSyl, 0.75); }, 400);
+}
+
+function cpSylWordAnswer(chosen, correct) {
+  var s = cpSylState;
+  var fb = document.getElementById('cpSylWordFeedback');
+  if (chosen.word === correct.word) {
+    s.score++;
+    fb.innerHTML = '<span style="color:#06D6A0;">✅ Bravo ! ' + correct.emoji + ' ' + correct.word + '</span>';
+    cpSpeak('Oui ! ' + correct.word + ' !', 0.8);
+    s.round++;
+    setTimeout(function() { cpSylWordShow(); }, 1800);
+  } else {
+    fb.innerHTML = '<span style="color:#FF6B9D;">❌ C\'était ' + correct.emoji + ' ' + correct.word + ' !</span>';
+    s.round++;
+    setTimeout(function() { cpSylWordShow(); }, 1800);
+  }
+}
+
+// Keep backward compatibility - cpSyllabesStart now goes to hub
+function cpSyllabesStart() {
+  cpSylHubShow();
 }
 
 // ============================================
@@ -17363,7 +18140,7 @@ var cpVocabThemes = {
     {word:'un chat',emoji:'🐱'},{word:'un chien',emoji:'🐶'},{word:'un cheval',emoji:'🐴'},{word:'une vache',emoji:'🐮'},{word:'un cochon',emoji:'🐷'},
     {word:'une poule',emoji:'🐔'},{word:'un coq',emoji:'🐓'},{word:'un canard',emoji:'🦆'},{word:'un mouton',emoji:'🐑'},{word:'une chèvre',emoji:'🐐'},
     {word:'un âne',emoji:'🫏'},{word:'un lapin',emoji:'🐰'},{word:'une oie',emoji:'🪿'},{word:'une dinde',emoji:'🦃'},{word:'un poussin',emoji:'🐣'},
-    {word:'un taureau',emoji:'🐂'},{word:'un agneau',emoji:'🐑'},{word:'une souris',emoji:'🐭'},{word:'un escargot',emoji:'🐌'},{word:'un ver de terre',emoji:'🪱'}
+    {word:'un taureau',emoji:'🐂'},{word:'un agneau',emoji:'🐏'},{word:'une souris',emoji:'🐭'},{word:'un escargot',emoji:'🐌'},{word:'un ver de terre',emoji:'🪱'}
   ]},
   'Les animaux sauvages': {emoji:'🦁', items:[
     {word:'un lion',emoji:'🦁'},{word:'un éléphant',emoji:'🐘'},{word:'une girafe',emoji:'🦒'},{word:'un singe',emoji:'🐒'},{word:'un tigre',emoji:'🐯'},
@@ -17374,40 +18151,40 @@ var cpVocabThemes = {
   'Les insectes et petites bêtes': {emoji:'🐛', items:[
     {word:'un papillon',emoji:'🦋'},{word:'une abeille',emoji:'🐝'},{word:'une fourmi',emoji:'🐜'},{word:'une coccinelle',emoji:'🐞'},{word:'une mouche',emoji:'🪰'},
     {word:'un moustique',emoji:'🦟'},{word:'une araignée',emoji:'🕷️'},{word:'une chenille',emoji:'🐛'},{word:'une libellule',emoji:'🪻'},{word:'un scarabée',emoji:'🪲'},
-    {word:'une guêpe',emoji:'🐝'},{word:'une sauterelle',emoji:'🦗'}
+    {word:'une guêpe',emoji:'🟡'},{word:'une sauterelle',emoji:'🦗'}
   ]},
   'Le corps humain': {emoji:'🧍', items:[
     {word:'la tête',emoji:'😊'},{word:'les cheveux',emoji:'💇'},{word:'le front',emoji:'🤔'},{word:'les yeux',emoji:'👁️'},{word:'les oreilles',emoji:'👂'},
     {word:'le nez',emoji:'👃'},{word:'la bouche',emoji:'👄'},{word:'les dents',emoji:'🦷'},{word:'la langue',emoji:'👅'},{word:'le menton',emoji:'😐'},
     {word:'le cou',emoji:'🦒'},{word:'les épaules',emoji:'🤷'},{word:'le bras',emoji:'💪'},{word:'le coude',emoji:'🦾'},{word:'le poignet',emoji:'⌚'},
     {word:'la main',emoji:'🤲'},{word:'le doigt',emoji:'☝️'},{word:'un ongle',emoji:'💅'},{word:'le ventre',emoji:'🫄'},{word:'le dos',emoji:'🔙'},
-    {word:'la jambe',emoji:'🦵'},{word:'le genou',emoji:'🦿'},{word:'la cheville',emoji:'🦶'},{word:'le pied',emoji:'👣'},{word:'un orteil',emoji:'🦶'}
+    {word:'la jambe',emoji:'🦵'},{word:'le genou',emoji:'🦿'},{word:'la cheville',emoji:'🦶'},{word:'le pied',emoji:'👣'},{word:'un orteil',emoji:'🤏'}
   ]},
   'Les vêtements': {emoji:'👗', items:[
-    {word:'un pantalon',emoji:'👖'},{word:'une chemise',emoji:'👔'},{word:'une robe',emoji:'👗'},{word:'une jupe',emoji:'🩱'},{word:'un pull',emoji:'🧥'},
-    {word:'un manteau',emoji:'🧥'},{word:'une veste',emoji:'🧥'},{word:'un chapeau',emoji:'👒'},{word:'un bonnet',emoji:'🧢'},{word:'une écharpe',emoji:'🧣'},
+    {word:'un pantalon',emoji:'👖'},{word:'une chemise',emoji:'👔'},{word:'une robe',emoji:'👗'},{word:'une jupe',emoji:'🩰'},{word:'un pull',emoji:'🧶'},
+    {word:'un manteau',emoji:'🧥'},{word:'une veste',emoji:'🦺'},{word:'un chapeau',emoji:'👒'},{word:'un bonnet',emoji:'🧢'},{word:'une écharpe',emoji:'🧣'},
     {word:'des gants',emoji:'🧤'},{word:'des chaussures',emoji:'👟'},{word:'des bottes',emoji:'👢'},{word:'des chaussettes',emoji:'🧦'},{word:'un short',emoji:'🩳'},
-    {word:'un pyjama',emoji:'😴'},{word:'un maillot',emoji:'🩱'},{word:'une ceinture',emoji:'👔'},{word:'des lunettes',emoji:'👓'},{word:'un sac',emoji:'👜'}
+    {word:'un pyjama',emoji:'😴'},{word:'un maillot',emoji:'🩱'},{word:'une ceinture',emoji:'🪢'},{word:'des lunettes',emoji:'👓'},{word:'un sac',emoji:'👜'}
   ]},
   'Les fruits': {emoji:'🍎', items:[
     {word:'une pomme',emoji:'🍎'},{word:'une poire',emoji:'🍐'},{word:'une banane',emoji:'🍌'},{word:'une orange',emoji:'🍊'},{word:'une fraise',emoji:'🍓'},
     {word:'une cerise',emoji:'🍒'},{word:'du raisin',emoji:'🍇'},{word:'une pastèque',emoji:'🍉'},{word:'un ananas',emoji:'🍍'},{word:'un citron',emoji:'🍋'},
-    {word:'une pêche',emoji:'🍑'},{word:'un abricot',emoji:'🍑'},{word:'une framboise',emoji:'🫐'},{word:'un kiwi',emoji:'🥝'},{word:'un melon',emoji:'🍈'}
+    {word:'une pêche',emoji:'🍑'},{word:'un abricot',emoji:'🟠'},{word:'une framboise',emoji:'🫐'},{word:'un kiwi',emoji:'🥝'},{word:'un melon',emoji:'🍈'}
   ]},
   'Les légumes': {emoji:'🥕', items:[
     {word:'une carotte',emoji:'🥕'},{word:'une tomate',emoji:'🍅'},{word:'une salade',emoji:'🥬'},{word:'une pomme de terre',emoji:'🥔'},{word:'un haricot',emoji:'🫘'},
-    {word:'un petit pois',emoji:'🟢'},{word:'une courgette',emoji:'🥒'},{word:'un concombre',emoji:'🥒'},{word:'un oignon',emoji:'🧅'},{word:'de l\'ail',emoji:'🧄'},
-    {word:'un chou',emoji:'🥬'},{word:'un poivron',emoji:'🫑'}
+    {word:'un petit pois',emoji:'🟢'},{word:'une courgette',emoji:'🥒'},{word:'un concombre',emoji:'🫛'},{word:'un oignon',emoji:'🧅'},{word:'de l\'ail',emoji:'🧄'},
+    {word:'un chou',emoji:'🥦'},{word:'un poivron',emoji:'🫑'}
   ]},
   'Les repas': {emoji:'🍽️', items:[
     {word:'du pain',emoji:'🍞'},{word:'du beurre',emoji:'🧈'},{word:'du fromage',emoji:'🧀'},{word:'du lait',emoji:'🥛'},{word:'un œuf',emoji:'🥚'},
     {word:'du poulet',emoji:'🍗'},{word:'un poisson',emoji:'🐟'},{word:'du riz',emoji:'🍚'},{word:'des pâtes',emoji:'🍝'},{word:'de la soupe',emoji:'🍲'},
     {word:'de l\'eau',emoji:'💧'},{word:'du jus',emoji:'🧃'},{word:'un gâteau',emoji:'🎂'},{word:'du chocolat',emoji:'🍫'},{word:'de la confiture',emoji:'🫙'},
-    {word:'du miel',emoji:'🍯'},{word:'un yaourt',emoji:'🥛'},{word:'une crêpe',emoji:'🥞'}
+    {word:'du miel',emoji:'🍯'},{word:'un yaourt',emoji:'🍨'},{word:'une crêpe',emoji:'🥞'}
   ]},
   'L\'école': {emoji:'🏫', items:[
     {word:'un livre',emoji:'📚'},{word:'un cahier',emoji:'📓'},{word:'un crayon',emoji:'✏️'},{word:'un stylo',emoji:'🖊️'},{word:'une gomme',emoji:'🧽'},
-    {word:'une règle',emoji:'📏'},{word:'des ciseaux',emoji:'✂️'},{word:'de la colle',emoji:'🧴'},{word:'un cartable',emoji:'🎒'},{word:'une trousse',emoji:'✏️'},
+    {word:'une règle',emoji:'📏'},{word:'des ciseaux',emoji:'✂️'},{word:'de la colle',emoji:'🧴'},{word:'un cartable',emoji:'🎒'},{word:'une trousse',emoji:'👝'},
     {word:'le tableau',emoji:'📋'},{word:'une craie',emoji:'🖍️'},{word:'le bureau',emoji:'🪑'},{word:'une chaise',emoji:'💺'},{word:'la classe',emoji:'🏫'},
     {word:'la cour',emoji:'🏟️'},{word:'la maîtresse',emoji:'👩‍🏫'},{word:'un camarade',emoji:'👦'},{word:'la récréation',emoji:'⏰'},{word:'la cantine',emoji:'🍽️'}
   ]},
@@ -17429,8 +18206,8 @@ var cpVocabThemes = {
   ]},
   'La famille': {emoji:'👨‍👩‍👧‍👦', items:[
     {word:'papa',emoji:'👨'},{word:'maman',emoji:'👩'},{word:'le frère',emoji:'👦'},{word:'la sœur',emoji:'👧'},{word:'le bébé',emoji:'👶'},
-    {word:'papi',emoji:'👴'},{word:'mamie',emoji:'👵'},{word:'un oncle',emoji:'👨‍🦱'},{word:'une tante',emoji:'👩‍🦱'},{word:'un cousin',emoji:'👦'},
-    {word:'une cousine',emoji:'👧'},{word:'le fils',emoji:'👦'},{word:'la fille',emoji:'👧'},{word:'le mari',emoji:'🤵'},{word:'la femme',emoji:'👰'}
+    {word:'papi',emoji:'👴'},{word:'mamie',emoji:'👵'},{word:'un oncle',emoji:'👨‍🦱'},{word:'une tante',emoji:'👩‍🦱'},{word:'un cousin',emoji:'🧒'},
+    {word:'une cousine',emoji:'👩‍🦰'},{word:'le fils',emoji:'🧑'},{word:'la fille',emoji:'👱‍♀️'},{word:'le mari',emoji:'🤵'},{word:'la femme',emoji:'👰'}
   ]},
   'Les transports': {emoji:'🚗', items:[
     {word:'une voiture',emoji:'🚗'},{word:'un bus',emoji:'🚌'},{word:'un train',emoji:'🚆'},{word:'un avion',emoji:'✈️'},{word:'un vélo',emoji:'🚲'},
@@ -17454,21 +18231,21 @@ var cpVocabThemes = {
     {word:'la grêle',emoji:'🧊'},{word:'chaud',emoji:'🥵'},{word:'froid',emoji:'🥶'},
     {word:'ensoleillé',emoji:'☀️'},{word:'pluvieux',emoji:'🌧️'},{word:'nuageux',emoji:'☁️'},{word:'venteux',emoji:'🍃'}
   ]},
-  'Les jours, mois, saisons': {emoji:'📅', items:[
-    {word:'lundi',emoji:'1️⃣'},{word:'mardi',emoji:'2️⃣'},{word:'mercredi',emoji:'3️⃣'},{word:'jeudi',emoji:'4️⃣'},{word:'vendredi',emoji:'5️⃣'},
-    {word:'samedi',emoji:'6️⃣'},{word:'dimanche',emoji:'7️⃣'},{word:'janvier',emoji:'❄️'},{word:'février',emoji:'💕'},{word:'mars',emoji:'🌱'},
-    {word:'avril',emoji:'🌷'},{word:'mai',emoji:'🌼'},{word:'juin',emoji:'☀️'},{word:'juillet',emoji:'🏖️'},{word:'août',emoji:'🌻'},
-    {word:'septembre',emoji:'🍂'},{word:'octobre',emoji:'🎃'},{word:'novembre',emoji:'🍁'},{word:'décembre',emoji:'🎄'},{word:'le printemps',emoji:'🌸'},
-    {word:'l\'été',emoji:'☀️'},{word:'l\'automne',emoji:'🍂'},{word:'l\'hiver',emoji:'⛄'},{word:'hier',emoji:'⬅️'},{word:'demain',emoji:'➡️'}
+  'Les jours, mois, saisons': {emoji:'📅', quizMode:'listen', items:[
+    {word:'lundi',emoji:'🟤'},{word:'mardi',emoji:'🔴'},{word:'mercredi',emoji:'🟢'},{word:'jeudi',emoji:'🟡'},{word:'vendredi',emoji:'🔵'},
+    {word:'samedi',emoji:'🟣'},{word:'dimanche',emoji:'🟠'},{word:'janvier',emoji:'⛷️'},{word:'février',emoji:'💕'},{word:'mars',emoji:'🌱'},
+    {word:'avril',emoji:'🌷'},{word:'mai',emoji:'🌼'},{word:'juin',emoji:'🌞'},{word:'juillet',emoji:'🏄'},{word:'août',emoji:'🌻'},
+    {word:'septembre',emoji:'📚'},{word:'octobre',emoji:'🎃'},{word:'novembre',emoji:'🍁'},{word:'décembre',emoji:'🎄'},{word:'le printemps',emoji:'🌸'},
+    {word:'l\'été',emoji:'🏖️'},{word:'l\'automne',emoji:'🍂'},{word:'l\'hiver',emoji:'⛄'},{word:'hier',emoji:'⏪'},{word:'demain',emoji:'⏩'}
   ]},
   'Les formes': {emoji:'🔷', items:[
     {word:'un cercle',emoji:'⭕'},{word:'un carré',emoji:'🟦'},{word:'un triangle',emoji:'🔺'},{word:'un rectangle',emoji:'🟩'},{word:'une croix',emoji:'✖️'},
     {word:'un cœur',emoji:'❤️'},{word:'un losange',emoji:'🔷'},{word:'un ovale',emoji:'🥚'}
   ]},
-  'Les positions': {emoji:'📍', items:[
-    {word:'sur',emoji:'⬆️'},{word:'sous',emoji:'⬇️'},{word:'devant',emoji:'🔜'},{word:'derrière',emoji:'🔙'},{word:'à côté',emoji:'↔️'},
-    {word:'entre',emoji:'↕️'},{word:'dans',emoji:'📦'},{word:'dehors',emoji:'🚪'},{word:'en haut',emoji:'⬆️'},{word:'en bas',emoji:'⬇️'},
-    {word:'à gauche',emoji:'⬅️'},{word:'à droite',emoji:'➡️'}
+  'Les positions': {emoji:'📍', quizMode:'listen', items:[
+    {word:'sur',emoji:'🔼'},{word:'sous',emoji:'🔽'},{word:'devant',emoji:'🔜'},{word:'derrière',emoji:'🔙'},{word:'à côté',emoji:'↔️'},
+    {word:'entre',emoji:'↕️'},{word:'dans',emoji:'📦'},{word:'dehors',emoji:'🚪'},{word:'en haut',emoji:'☝️'},{word:'en bas',emoji:'👇'},
+    {word:'à gauche',emoji:'👈'},{word:'à droite',emoji:'👉'}
   ]},
   'Les émotions': {emoji:'😊', items:[
     {word:'content',emoji:'😊'},{word:'triste',emoji:'😢'},{word:'en colère',emoji:'😠'},{word:'surpris',emoji:'😲'},{word:'fatigué',emoji:'😴'},
@@ -17480,13 +18257,13 @@ var cpVocabThemes = {
     {word:'sauter',emoji:'🦘'},{word:'nager',emoji:'🏊'},{word:'lire',emoji:'📖'},{word:'écrire',emoji:'✍️'},{word:'dessiner',emoji:'🎨'},
     {word:'chanter',emoji:'🎤'},{word:'danser',emoji:'💃'},{word:'jouer',emoji:'🎮'},{word:'rire',emoji:'😂'},{word:'pleurer',emoji:'😭'},
     {word:'parler',emoji:'🗣️'},{word:'écouter',emoji:'👂'},{word:'regarder',emoji:'👀'},{word:'toucher',emoji:'🤚'},{word:'sentir',emoji:'👃'},
-    {word:'ouvrir',emoji:'📂'},{word:'fermer',emoji:'📁'},{word:'monter',emoji:'⬆️'},{word:'descendre',emoji:'⬇️'},{word:'tomber',emoji:'🤸'}
+    {word:'ouvrir',emoji:'📂'},{word:'fermer',emoji:'📁'},{word:'monter',emoji:'🧗'},{word:'descendre',emoji:'🛷'},{word:'tomber',emoji:'🤸'}
   ]},
-  'La politesse': {emoji:'🤝', items:[
+  'La politesse': {emoji:'🤝', quizMode:'listen', items:[
     {word:'bonjour',emoji:'👋'},{word:'bonsoir',emoji:'🌙'},{word:'au revoir',emoji:'👋'},{word:'merci',emoji:'🙏'},{word:'s\'il vous plaît',emoji:'🤲'},
     {word:'pardon',emoji:'🙇'},{word:'excuse-moi',emoji:'🙏'},{word:'bonne nuit',emoji:'🌙'}
   ]},
-  'Les nombres en lettres': {emoji:'🔢', items:[
+  'Les nombres en lettres': {emoji:'🔢', quizMode:'listen', items:[
     {word:'un',emoji:'1️⃣'},{word:'deux',emoji:'2️⃣'},{word:'trois',emoji:'3️⃣'},{word:'quatre',emoji:'4️⃣'},{word:'cinq',emoji:'5️⃣'},
     {word:'six',emoji:'6️⃣'},{word:'sept',emoji:'7️⃣'},{word:'huit',emoji:'8️⃣'},{word:'neuf',emoji:'9️⃣'},{word:'dix',emoji:'🔟'},
     {word:'onze',emoji:'1️⃣'},{word:'douze',emoji:'2️⃣'},{word:'treize',emoji:'3️⃣'},{word:'quatorze',emoji:'4️⃣'},{word:'quinze',emoji:'5️⃣'},
@@ -17495,7 +18272,7 @@ var cpVocabThemes = {
   'Les jouets et loisirs': {emoji:'🧸', items:[
     {word:'un ballon',emoji:'⚽'},{word:'une poupée',emoji:'🧸'},{word:'un puzzle',emoji:'🧩'},{word:'un dessin',emoji:'🖼️'},{word:'la peinture',emoji:'🎨'},
     {word:'la musique',emoji:'🎵'},{word:'la danse',emoji:'💃'},{word:'un toboggan',emoji:'🛝'},{word:'une balançoire',emoji:'🎠'},{word:'une marionnette',emoji:'🤡'},
-    {word:'une peluche',emoji:'🧸'},{word:'un cerf-volant',emoji:'🪁'}
+    {word:'une peluche',emoji:'🐻'},{word:'un cerf-volant',emoji:'🪁'}
   ]}
 };
 var cpVocabCurrentTheme = null;
@@ -17560,7 +18337,12 @@ function cpVocabCardNext() {
 var cpVocabQuizState = { items: [], current: 0, score: 0 };
 
 function cpVocabModeQuiz() {
-  var items = cpShuffle(cpVocabThemes[cpVocabCurrentTheme].items.slice());
+  var theme = cpVocabThemes[cpVocabCurrentTheme];
+  if (theme.quizMode === 'listen') {
+    cpVocabModeEcouter();
+    return;
+  }
+  var items = cpShuffle(theme.items.slice());
   cpVocabQuizState.items = items.slice(0, Math.min(10, items.length));
   cpVocabQuizState.current = 0;
   cpVocabQuizState.score = 0;
