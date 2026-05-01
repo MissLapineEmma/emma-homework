@@ -2116,8 +2116,8 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
           <!-- Hour markers and numbers -->
           <g id="clockMarkers"></g>
           <!-- Hands -->
-          <line id="clockMinuteHand" x1="150" y1="150" x2="150" y2="40" stroke="#6C63FF" stroke-width="4" stroke-linecap="round" style="display:none;cursor:grab;"/>
-          <line id="clockHourHand" x1="150" y1="150" x2="150" y2="65" stroke="#FF6B9D" stroke-width="7" stroke-linecap="round" style="cursor:grab;"/>
+          <line id="clockMinuteHand" x1="150" y1="150" x2="150" y2="40" stroke="#6C63FF" stroke-width="5" stroke-linecap="round" style="display:none;cursor:grab;"/>
+          <line id="clockHourHand" x1="150" y1="150" x2="150" y2="65" stroke="#FF6B9D" stroke-width="8" stroke-linecap="round" style="cursor:grab;"/>
           <!-- Center dot -->
           <circle cx="150" cy="150" r="8" fill="#6C63FF"/>
         </svg>
@@ -2140,6 +2140,297 @@ textarea.form-input { min-height: 120px; resize: vertical; line-height: 1.6; }
         <button class="btn btn-outline" onclick="startClockQuiz()" style="font-size:0.9rem;padding:8px 18px;">🎯 Mode Quiz</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===========================
+       CP LECTURE SCREEN (Reading Section)
+       =========================== -->
+  <div class="screen" id="cpLectureScreen">
+    <div class="back-link" onclick="showScreen('homeScreen')">← Retour</div>
+    <div class="logo">📖 Lecture</div>
+    <p class="subtitle">Apprends à lire !</p>
+    <div class="game-grid">
+      <div class="game-card" onclick="cpSonsStart()">
+        <div class="card-icon">🔤</div>
+        <div class="card-title">Les Sons</div>
+        <div class="card-desc">Reconnais les sons</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#4CC9F0,#3A86FF)"></div>
+        <div id="cpSonsStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+      <div class="game-card" onclick="cpSyllabesStart()">
+        <div class="card-icon">🧩</div>
+        <div class="card-title">Les Syllabes</div>
+        <div class="card-desc">Construis des mots</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#06D6A0,#118AB2)"></div>
+        <div id="cpSyllabesStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+      <div class="game-card" onclick="cpLireMotsStart()">
+        <div class="card-icon">👂</div>
+        <div class="card-title">Lire des Mots</div>
+        <div class="card-desc">Écoute et trouve le mot</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#FF6B9D,#9B5DE5)"></div>
+        <div id="cpLireMotsStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CP SONS GAME -->
+  <div class="screen" id="cpSonsGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpLectureScreen')">✕ Quitter</button></div>
+    <div class="logo">🔤 Les Sons</div>
+    <div id="cpSonsLevelSelect" style="text-align:center;margin:10px 0;">
+      <button class="btn btn-sm" onclick="cpSonsSetLevel(1)" id="cpSonsLvl1" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 1 — Voyelles</button>
+      <button class="btn btn-sm btn-outline" onclick="cpSonsSetLevel(2)" id="cpSonsLvl2" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 2 — Consonnes</button>
+      <button class="btn btn-sm btn-outline" onclick="cpSonsSetLevel(3)" id="cpSonsLvl3" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 3 — Sons complexes</button>
+    </div>
+    <div id="cpSonsProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpSonsPrompt" style="text-align:center;font-size:1.3rem;font-weight:700;color:#333;margin:15px 0;"></div>
+    <div id="cpSonsSpeakBtn" style="text-align:center;margin:10px 0;">
+      <button class="btn" onclick="cpSonsSpeakCurrent()" style="font-size:1.2rem;padding:12px 28px;">🔊 Écouter le son</button>
+    </div>
+    <div id="cpSonsChoices" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:20px auto;max-width:400px;"></div>
+    <div id="cpSonsFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP SYLLABES GAME -->
+  <div class="screen" id="cpSyllabesGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpLectureScreen')">✕ Quitter</button></div>
+    <div class="logo">🧩 Les Syllabes</div>
+    <div id="cpSyllabesProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpSyllabesEmoji" style="text-align:center;font-size:4rem;margin:10px 0;"></div>
+    <div id="cpSyllabesSpeakBtn" style="text-align:center;margin:8px 0;">
+      <button class="btn btn-sm" onclick="cpSyllabesSpeakWord()" style="font-size:1rem;padding:8px 20px;">🔊 Écouter</button>
+    </div>
+    <div id="cpSyllabesBuilt" style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--purple);margin:12px 0;min-height:50px;letter-spacing:2px;"></div>
+    <div id="cpSyllabesTiles" style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:15px auto;max-width:400px;"></div>
+    <div id="cpSyllabesFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP LIRE DES MOTS GAME -->
+  <div class="screen" id="cpLireMotsGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpLectureScreen')">✕ Quitter</button></div>
+    <div class="logo">👂 Lire des Mots</div>
+    <div id="cpLireMotsLevelSelect" style="text-align:center;margin:10px 0;">
+      <button class="btn btn-sm" onclick="cpLireMotsSetLevel(1)" id="cpLireMotsLvl1" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 1 — Facile</button>
+      <button class="btn btn-sm btn-outline" onclick="cpLireMotsSetLevel(2)" id="cpLireMotsLvl2" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 2 — Moyen</button>
+      <button class="btn btn-sm btn-outline" onclick="cpLireMotsSetLevel(3)" id="cpLireMotsLvl3" style="margin:4px;border-radius:20px;padding:8px 16px;">Niveau 3 — Difficile</button>
+    </div>
+    <div id="cpLireMotsProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpLireMotsSpeakBtn" style="text-align:center;margin:20px 0;">
+      <button class="btn" onclick="cpLireMotsSpeakCurrent()" style="font-size:1.4rem;padding:14px 32px;">🔊 Écouter le mot</button>
+    </div>
+    <div id="cpLireMotsChoices" style="display:flex;flex-direction:column;align-items:center;gap:14px;margin:20px auto;max-width:350px;"></div>
+    <div id="cpLireMotsFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
+  </div>
+
+  <!-- ===========================
+       CP MATHS SCREEN
+       =========================== -->
+  <div class="screen" id="cpMathsScreen">
+    <div class="back-link" onclick="showScreen('homeScreen')">← Retour</div>
+    <div class="logo">🔢 Maths</div>
+    <p class="subtitle">Compte et calcule !</p>
+    <div class="game-grid">
+      <div class="game-card" onclick="cpCompterStart()">
+        <div class="card-icon">🍎</div>
+        <div class="card-title">Compter</div>
+        <div class="card-desc">Compte les objets</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#06D6A0,#118AB2)"></div>
+        <div id="cpCompterStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+      <div class="game-card" onclick="cpCalculStart()">
+        <div class="card-icon">➕</div>
+        <div class="card-title">Calcul</div>
+        <div class="card-desc">Additionne et soustrais</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#FF6B9D,#9B5DE5)"></div>
+        <div id="cpCalculStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+      <div class="game-card" onclick="cpComparerStart()">
+        <div class="card-icon">⚖️</div>
+        <div class="card-title">Comparer</div>
+        <div class="card-desc">Plus grand ou plus petit ?</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#4CC9F0,#3A86FF)"></div>
+        <div id="cpComparerStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CP COMPTER GAME -->
+  <div class="screen" id="cpCompterGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpMathsScreen')">✕ Quitter</button></div>
+    <div class="logo">🍎 Compter</div>
+    <div id="cpCompterLevelSelect" style="text-align:center;margin:10px 0;">
+      <button class="btn btn-sm" onclick="cpCompterSetLevel(1)" id="cpCompterLvl1" style="margin:4px;border-radius:20px;padding:8px 16px;">1 à 10</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCompterSetLevel(2)" id="cpCompterLvl2" style="margin:4px;border-radius:20px;padding:8px 16px;">10 à 20</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCompterSetLevel(3)" id="cpCompterLvl3" style="margin:4px;border-radius:20px;padding:8px 16px;">10 à 50</button>
+    </div>
+    <div id="cpCompterProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpCompterObjects" style="text-align:center;font-size:2rem;line-height:1.6;margin:15px auto;max-width:380px;min-height:80px;"></div>
+    <div id="cpCompterQuestion" style="text-align:center;font-family:'Fredoka One',cursive;font-size:1.3rem;color:#333;margin:10px 0;">Combien y en a-t-il ?</div>
+    <div id="cpCompterChoices" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:15px auto;max-width:400px;"></div>
+    <div id="cpCompterFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP CALCUL GAME -->
+  <div class="screen" id="cpCalculGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpMathsScreen')">✕ Quitter</button></div>
+    <div class="logo">➕ Calcul</div>
+    <div id="cpCalculLevelSelect" style="text-align:center;margin:10px 0;">
+      <button class="btn btn-sm" onclick="cpCalculSetLevel(1)" id="cpCalculLvl1" style="margin:4px;border-radius:20px;padding:8px 14px;font-size:0.8rem;">+ jusqu'à 10</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCalculSetLevel(2)" id="cpCalculLvl2" style="margin:4px;border-radius:20px;padding:8px 14px;font-size:0.8rem;">+ jusqu'à 20</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCalculSetLevel(3)" id="cpCalculLvl3" style="margin:4px;border-radius:20px;padding:8px 14px;font-size:0.8rem;">− jusqu'à 10</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCalculSetLevel(4)" id="cpCalculLvl4" style="margin:4px;border-radius:20px;padding:8px 14px;font-size:0.8rem;">− jusqu'à 20</button>
+      <button class="btn btn-sm btn-outline" onclick="cpCalculSetLevel(5)" id="cpCalculLvl5" style="margin:4px;border-radius:20px;padding:8px 14px;font-size:0.8rem;">Mixte</button>
+    </div>
+    <div id="cpCalculProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpCalculVisual" style="text-align:center;font-size:1.8rem;margin:15px 0;min-height:60px;line-height:1.4;"></div>
+    <div id="cpCalculQuestion" style="text-align:center;font-family:'Fredoka One',cursive;font-size:2rem;color:var(--purple);margin:10px 0;"></div>
+    <div id="cpCalculChoices" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:15px auto;max-width:400px;"></div>
+    <div id="cpCalculFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP COMPARER GAME -->
+  <div class="screen" id="cpComparerGameScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpMathsScreen')">✕ Quitter</button></div>
+    <div class="logo">⚖️ Comparer</div>
+    <div id="cpComparerLevelSelect" style="text-align:center;margin:10px 0;">
+      <button class="btn btn-sm" onclick="cpComparerSetLevel(1)" id="cpComparerLvl1" style="margin:4px;border-radius:20px;padding:8px 16px;">0 à 10</button>
+      <button class="btn btn-sm btn-outline" onclick="cpComparerSetLevel(2)" id="cpComparerLvl2" style="margin:4px;border-radius:20px;padding:8px 16px;">0 à 20</button>
+      <button class="btn btn-sm btn-outline" onclick="cpComparerSetLevel(3)" id="cpComparerLvl3" style="margin:4px;border-radius:20px;padding:8px 16px;">0 à 100</button>
+    </div>
+    <div id="cpComparerProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpComparerNumbers" style="text-align:center;margin:25px 0;">
+      <span id="cpComparerLeft" style="font-family:'Fredoka One',cursive;font-size:3.5rem;color:var(--purple);"></span>
+      <span id="cpComparerOp" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#999;margin:0 15px;">?</span>
+      <span id="cpComparerRight" style="font-family:'Fredoka One',cursive;font-size:3.5rem;color:var(--pink);"></span>
+    </div>
+    <div id="cpComparerChoices" style="display:flex;justify-content:center;gap:16px;margin:20px auto;"></div>
+    <div id="cpComparerFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
+  </div>
+
+  <!-- ===========================
+       CP VOCABULAIRE SCREEN
+       =========================== -->
+  <div class="screen" id="cpVocabScreen">
+    <div class="back-link" onclick="showScreen('homeScreen')">← Retour</div>
+    <div class="logo">🎨 Vocabulaire</div>
+    <p class="subtitle">Apprends des mots !</p>
+    <div id="cpVocabThemes" style="display:flex;flex-direction:column;gap:10px;margin:15px 0;"></div>
+  </div>
+
+  <!-- CP VOCAB THEME SCREEN (game mode picker) -->
+  <div class="screen" id="cpVocabThemeScreen">
+    <div class="back-link" onclick="showScreen('cpVocabScreen')">← Retour</div>
+    <div class="logo" id="cpVocabThemeTitle">🎨 Thème</div>
+    <div class="game-grid">
+      <div class="game-card" onclick="cpVocabModeApprendre()">
+        <div class="card-icon">📚</div>
+        <div class="card-title">Apprendre</div>
+        <div class="card-desc">Découvre les mots</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#4CC9F0,#3A86FF)"></div>
+      </div>
+      <div class="game-card" onclick="cpVocabModeQuiz()">
+        <div class="card-icon">❓</div>
+        <div class="card-title">Quiz</div>
+        <div class="card-desc">Trouve le bon mot</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#06D6A0,#118AB2)"></div>
+      </div>
+      <div class="game-card" onclick="cpVocabModeEcouter()">
+        <div class="card-icon">👂</div>
+        <div class="card-title">Écouter</div>
+        <div class="card-desc">Écoute et trouve</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#FF6B9D,#9B5DE5)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CP VOCAB APPRENDRE (flashcards) -->
+  <div class="screen" id="cpVocabApprendreScreen">
+    <div class="back-link" onclick="showScreen('cpVocabThemeScreen')">← Retour</div>
+    <div class="logo" id="cpVocabApprendreTitle">📚 Apprendre</div>
+    <div style="text-align:center;margin:20px 0;">
+      <div id="cpVocabCardEmoji" style="font-size:5rem;margin:10px 0;"></div>
+      <div id="cpVocabCardWord" style="font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--purple);margin:10px 0;"></div>
+      <button class="btn" onclick="cpVocabCardSpeak()" style="font-size:1.1rem;padding:10px 24px;margin:10px 0;">🔊 Écouter</button>
+      <div style="margin-top:20px;display:flex;justify-content:center;gap:15px;">
+        <button class="btn btn-outline" onclick="cpVocabCardPrev()" style="font-size:1.2rem;padding:10px 20px;">⬅️</button>
+        <span id="cpVocabCardNum" style="font-weight:700;color:#999;font-size:1rem;line-height:46px;"></span>
+        <button class="btn btn-outline" onclick="cpVocabCardNext()" style="font-size:1.2rem;padding:10px 20px;">➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CP VOCAB QUIZ -->
+  <div class="screen" id="cpVocabQuizScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpVocabThemeScreen')">✕ Quitter</button></div>
+    <div class="logo">❓ Quiz Vocabulaire</div>
+    <div id="cpVocabQuizProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpVocabQuizEmoji" style="text-align:center;font-size:5rem;margin:15px 0;"></div>
+    <div id="cpVocabQuizChoices" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin:20px auto;max-width:350px;"></div>
+    <div id="cpVocabQuizFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP VOCAB ECOUTER -->
+  <div class="screen" id="cpVocabEcouterScreen">
+    <div class="quit-bar"><button class="quit-btn" onclick="showScreen('cpVocabThemeScreen')">✕ Quitter</button></div>
+    <div class="logo">👂 Écouter</div>
+    <div id="cpVocabEcouterProgress" style="text-align:center;font-weight:700;color:var(--purple);margin:8px 0;font-size:0.9rem;"></div>
+    <div id="cpVocabEcouterSpeakBtn" style="text-align:center;margin:20px 0;">
+      <button class="btn" onclick="cpVocabEcouterSpeak()" style="font-size:1.4rem;padding:14px 32px;">🔊 Écouter le mot</button>
+    </div>
+    <div id="cpVocabEcouterChoices" style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin:20px auto;max-width:400px;"></div>
+    <div id="cpVocabEcouterFeedback" style="text-align:center;font-size:1.8rem;margin-top:15px;min-height:50px;"></div>
+  </div>
+
+  <!-- ===========================
+       CP DECOUVERTE SCREEN
+       =========================== -->
+  <div class="screen" id="cpDecouverteScreen">
+    <div class="back-link" onclick="showScreen('homeScreen')">← Retour</div>
+    <div class="logo">🌍 Découverte</div>
+    <p class="subtitle">Explore le monde !</p>
+    <div class="game-grid">
+      <div class="game-card" onclick="cpJoursStart()">
+        <div class="card-icon">📅</div>
+        <div class="card-title">Les Jours</div>
+        <div class="card-desc">Jours de la semaine</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#4CC9F0,#3A86FF)"></div>
+        <div id="cpJoursStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+      <div class="game-card" onclick="cpMoisStart()">
+        <div class="card-icon">🗓️</div>
+        <div class="card-title">Mois et Saisons</div>
+        <div class="card-desc">Les 12 mois et 4 saisons</div>
+        <div class="card-stripe" style="background:linear-gradient(90deg,#06D6A0,#118AB2)"></div>
+        <div id="cpMoisStars" style="margin-top:6px;font-size:1.1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CP JOURS GAME -->
+  <div class="screen" id="cpJoursGameScreen">
+    <div class="back-link" onclick="showScreen('cpDecouverteScreen')">← Retour</div>
+    <div class="logo">📅 Les Jours</div>
+    <div id="cpJoursModeSelect" style="text-align:center;margin:15px 0;">
+      <button class="btn btn-sm" onclick="cpJoursApprendre()" style="margin:4px;border-radius:20px;padding:8px 18px;">📚 Apprendre</button>
+      <button class="btn btn-sm btn-outline" onclick="cpJoursQuiz()" style="margin:4px;border-radius:20px;padding:8px 18px;">❓ Quiz</button>
+      <button class="btn btn-sm btn-outline" onclick="cpJoursOrdre()" style="margin:4px;border-radius:20px;padding:8px 18px;">🔢 Remettre en ordre</button>
+    </div>
+    <div id="cpJoursContent" style="margin:15px 0;"></div>
+    <div id="cpJoursFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
+  </div>
+
+  <!-- CP MOIS GAME -->
+  <div class="screen" id="cpMoisGameScreen">
+    <div class="back-link" onclick="showScreen('cpDecouverteScreen')">← Retour</div>
+    <div class="logo">🗓️ Mois et Saisons</div>
+    <div id="cpMoisModeSelect" style="text-align:center;margin:15px 0;">
+      <button class="btn btn-sm" onclick="cpMoisApprendre()" style="margin:4px;border-radius:20px;padding:8px 18px;">📚 Apprendre</button>
+      <button class="btn btn-sm btn-outline" onclick="cpMoisQuizSaison()" style="margin:4px;border-radius:20px;padding:8px 18px;">🌸 Quiz Saisons</button>
+      <button class="btn btn-sm btn-outline" onclick="cpMoisQuizSuite()" style="margin:4px;border-radius:20px;padding:8px 18px;">➡️ Le mois suivant</button>
+    </div>
+    <div id="cpMoisContent" style="margin:15px 0;"></div>
+    <div id="cpMoisFeedback" style="text-align:center;font-size:1.8rem;margin-top:10px;min-height:50px;"></div>
   </div>
 
   <!-- ===========================
@@ -3641,25 +3932,51 @@ function loginAs(userId) {
 function applyUserLevel() {
   if (!currentUser) return;
   var level = currentUser.level;
+  var isCP = (level === 'CP');
+  var isCE2 = (level === 'CE2');
 
-  // Japonais: only CE2+
-  var japonaisBox = document.querySelector('.subject-japonais');
-  if (japonaisBox) japonaisBox.style.display = (level === 'CE2') ? '' : 'none';
+  // CE2 subject boxes: show only for CE2
+  var ce2Boxes = ['.subject-francais', '.subject-maths', '.subject-histoire', '.subject-japonais'];
+  ce2Boxes.forEach(function(sel) {
+    var box = document.querySelector(sel);
+    if (box) box.style.display = isCE2 ? '' : 'none';
+  });
 
-  // Histoire: only CE2+
-  var histoireBox = document.querySelector('.subject-histoire');
-  if (histoireBox) histoireBox.style.display = (level === 'CE2') ? '' : 'none';
-
-  // Clock game: only CP
-  var mathsBox = document.querySelector('.subject-maths');
-  if (mathsBox && level === 'CP') {
-    // For CP: replace maths content with simpler games
-    // We'll add a clock entry on the home screen
-  }
-
-  // Show clock card in subject grid for CP
+  // Clock box (old CP entry): hide, we now have a proper L'heure box in CP grid
   var clockBox = document.getElementById('clockSubjectBox');
-  if (clockBox) clockBox.style.display = (level === 'CP') ? '' : 'none';
+  if (clockBox) clockBox.style.display = 'none';
+
+  // Remove any existing CP boxes before creating new ones
+  var oldCpBoxes = document.querySelectorAll('.cp-subject-box');
+  oldCpBoxes.forEach(function(b) { b.remove(); });
+
+  if (isCP) {
+    var grid = document.querySelector('.subject-grid');
+    if (!grid) return;
+
+    var cpBoxes = [
+      { icon: '📖', avatar: '📚', name: 'Lecture', count: '3 jeux', bg: 'linear-gradient(135deg, #4CC9F0, #3A86FF)', screen: 'cpLectureScreen', init: 'cpRefreshLectureStars' },
+      { icon: '🔢', avatar: '🧮', name: 'Maths', count: '3 jeux', bg: 'linear-gradient(135deg, #06D6A0, #118AB2)', screen: 'cpMathsScreen', init: 'cpRefreshMathsStars' },
+      { icon: '⏰', avatar: '🕐', name: "L'heure", count: 'Aiguilles', bg: 'linear-gradient(135deg, #fff5f9, #c9b8ff)', screen: 'clockGameScreen', init: 'initClock' },
+      { icon: '🎨', avatar: '📝', name: 'Vocabulaire', count: '6 thèmes', bg: 'linear-gradient(135deg, #FF6B9D, #9B5DE5)', screen: 'cpVocabScreen', init: 'cpVocabRenderThemes' },
+      { icon: '🌍', avatar: '🔭', name: 'Découverte', count: '2 jeux', bg: 'linear-gradient(135deg, #FFD166, #EF476F)', screen: 'cpDecouverteScreen', init: 'cpRefreshDecouverteStars' }
+    ];
+
+    cpBoxes.forEach(function(cfg) {
+      var box = document.createElement('div');
+      box.className = 'subject-box cp-subject-box';
+      box.style.background = cfg.bg;
+      box.onclick = function() {
+        if (typeof window[cfg.init] === 'function') window[cfg.init]();
+        showScreen(cfg.screen);
+      };
+      box.innerHTML = '<div class="subject-avatar">' + cfg.avatar + '</div>' +
+        '<div class="subject-icon">' + cfg.icon + '</div>' +
+        '<div class="subject-name">' + cfg.name + '</div>' +
+        '<div class="subject-count">' + cfg.count + '</div>';
+      grid.appendChild(box);
+    });
+  }
 }
 
 // Wrap localStorage to prefix with user ID
@@ -16262,11 +16579,20 @@ function setupClockDrag() {
   }
 
   function onStart(e) {
-    var target = e.target;
-    if (target.id === 'clockHourHand') _clockDragging = 'hour';
-    else if (target.id === 'clockMinuteHand') _clockDragging = 'minute';
-    else _clockDragging = 'hour'; // tap anywhere = move hour hand
     e.preventDefault();
+    // Determine which hand is closer to tap point
+    var angle = getAngle(e);
+    if (_clockLevel === 2) {
+      // Compare tap angle to each hand's angle
+      var hourAngle = ((_clockHour % 12) * 30 + _clockMinute * 0.5);
+      var minAngle = (_clockMinute * 6);
+      // Normalize angles
+      var diffHour = Math.abs(((angle - hourAngle + 540) % 360) - 180);
+      var diffMin = Math.abs(((angle - minAngle + 540) % 360) - 180);
+      _clockDragging = (diffMin < diffHour) ? 'minute' : 'hour';
+    } else {
+      _clockDragging = 'hour';
+    }
     onMove(e);
   }
 
@@ -16371,6 +16697,1273 @@ function checkClockAnswer() {
   } else {
     if (fb) { fb.textContent = '❌ Essaie encore !'; fb.style.color = '#dc3545'; }
   }
+}
+
+// ============================================
+// CP GAMES — All game logic for Lisa (CP level)
+// ============================================
+
+// --- CP helper: speak French text ---
+function cpSpeak(text, rate) {
+  speakText(text, 'fr-FR', { rate: rate || 0.9, pitch: 1.1 });
+}
+
+// --- CP helper: shuffle array ---
+function cpShuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+// --- CP helper: generate wrong answers for numbers ---
+function cpWrongNumbers(correct, count, min, max) {
+  var wrongs = [];
+  while (wrongs.length < count) {
+    var n = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (n !== correct && wrongs.indexOf(n) === -1) wrongs.push(n);
+  }
+  return wrongs;
+}
+
+// --- CP helper: update star display from localStorage ---
+function cpUpdateStars(elemId, key) {
+  var el = document.getElementById(elemId);
+  if (!el) return;
+  var s = getUserData(key);
+  el.textContent = s ? '⭐'.repeat(parseInt(s)) : '';
+}
+
+// --- CP helper: save best stars ---
+function cpSaveBestStars(key, stars) {
+  var prev = parseInt(getUserData(key)) || 0;
+  if (stars > prev) setUserData(key, stars);
+}
+
+// ============================================
+// CP: REFRESH STARS ON SECTION SCREENS
+// ============================================
+function cpRefreshLectureStars() {
+  cpUpdateStars('cpSonsStars', 'cpSonsBest');
+  cpUpdateStars('cpSyllabesStars', 'cpSyllabesBest');
+  cpUpdateStars('cpLireMotsStars', 'cpLireMotsBest');
+}
+function cpRefreshMathsStars() {
+  cpUpdateStars('cpCompterStars', 'cpCompterBest');
+  cpUpdateStars('cpCalculStars', 'cpCalculBest');
+  cpUpdateStars('cpComparerStars', 'cpComparerBest');
+}
+function cpRefreshDecouverteStars() {
+  cpUpdateStars('cpJoursStars', 'cpJoursBest');
+  cpUpdateStars('cpMoisStars', 'cpMoisBest');
+}
+
+// ============================================
+// CP LECTURE: LES SONS (Phonics)
+// ============================================
+var cpSonsData = {
+  1: ['a', 'e', 'i', 'o', 'u', 'é', 'è'],
+  2: ['b', 'd', 'f', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v'],
+  3: ['ou', 'on', 'an', 'in', 'oi', 'ch', 'gn', 'ph', 'au', 'en', 'eau']
+};
+var cpSonsState = { level: 1, questions: [], current: 0, score: 0 };
+
+function cpSonsStart() {
+  cpSonsState.level = 1;
+  showScreen('cpSonsGameScreen');
+  cpSonsSetLevel(1);
+}
+
+function cpSonsSetLevel(lv) {
+  cpSonsState.level = lv;
+  for (var i = 1; i <= 3; i++) {
+    var btn = document.getElementById('cpSonsLvl' + i);
+    if (btn) {
+      btn.className = (i === lv) ? 'btn btn-sm' : 'btn btn-sm btn-outline';
+    }
+  }
+  cpSonsNewRound();
+}
+
+function cpSonsNewRound() {
+  var pool = cpSonsData[cpSonsState.level];
+  var questions = [];
+  var shuffled = cpShuffle(pool);
+  for (var i = 0; i < 10; i++) {
+    questions.push(shuffled[i % shuffled.length]);
+  }
+  cpSonsState.questions = questions;
+  cpSonsState.current = 0;
+  cpSonsState.score = 0;
+  cpSonsShowQuestion();
+}
+
+function cpSonsShowQuestion() {
+  var s = cpSonsState;
+  if (s.current >= 10) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpSonsBest', stars);
+    lastGameStartFn = function() { cpSonsNewRound(); showScreen('cpSonsGameScreen'); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Bravo ! Tu connais bien les sons ! 🎉' : s.score >= 6 ? 'Bien joué ! Continue ! 😊' : 'Continue à t\'entraîner ! 💪');
+    return;
+  }
+  document.getElementById('cpSonsProgress').textContent = 'Question ' + (s.current + 1) + ' / 10';
+  document.getElementById('cpSonsFeedback').textContent = '';
+  document.getElementById('cpSonsPrompt').textContent = 'Quel est ce son ?';
+
+  var correct = s.questions[s.current];
+  var pool = cpSonsData[s.level];
+  var choices = [correct];
+  var shuffledPool = cpShuffle(pool);
+  for (var i = 0; i < shuffledPool.length && choices.length < 4; i++) {
+    if (shuffledPool[i] !== correct) choices.push(shuffledPool[i]);
+  }
+  choices = cpShuffle(choices);
+
+  var container = document.getElementById('cpSonsChoices');
+  container.innerHTML = '';
+  choices.forEach(function(ch) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.6rem;padding:14px 28px;min-width:80px;border-radius:16px;font-family:"Fredoka One",cursive;';
+    btn.textContent = ch;
+    btn.onclick = function() { cpSonsAnswer(ch, correct); };
+    container.appendChild(btn);
+  });
+
+  setTimeout(function() { cpSonsSpeakCurrent(); }, 400);
+}
+
+function cpSonsSpeakCurrent() {
+  var s = cpSonsState;
+  if (s.current < s.questions.length) {
+    cpSpeak(s.questions[s.current], 0.7);
+  }
+}
+
+function cpSonsAnswer(picked, correct) {
+  var fb = document.getElementById('cpSonsFeedback');
+  if (picked === correct) {
+    cpSonsState.score++;
+    fb.textContent = '✅ Bravo ! 🎉';
+    fb.style.color = '#06D6A0';
+    cpSonsState.current++;
+    setTimeout(function() { cpSonsShowQuestion(); }, 1000);
+  } else {
+    fb.textContent = '❌ C\'est « ' + correct + ' » !';
+    fb.style.color = '#FF6B9D';
+    cpSonsState.current++;
+    setTimeout(function() { cpSonsShowQuestion(); }, 1500);
+  }
+}
+
+// ============================================
+// CP LECTURE: LES SYLLABES
+// ============================================
+var cpSyllabesData = [
+  { word: 'bateau', syllables: ['ba','teau'], emoji: '🚢' },
+  { word: 'maman', syllables: ['ma','man'], emoji: '👩' },
+  { word: 'papa', syllables: ['pa','pa'], emoji: '👨' },
+  { word: 'lapin', syllables: ['la','pin'], emoji: '🐰' },
+  { word: 'chapeau', syllables: ['cha','peau'], emoji: '🎩' },
+  { word: 'maison', syllables: ['mai','son'], emoji: '🏠' },
+  { word: 'poisson', syllables: ['poi','sson'], emoji: '🐟' },
+  { word: 'voiture', syllables: ['voi','ture'], emoji: '🚗' },
+  { word: 'école', syllables: ['é','cole'], emoji: '🏫' },
+  { word: 'ami', syllables: ['a','mi'], emoji: '👦' },
+  { word: 'soleil', syllables: ['so','leil'], emoji: '☀️' },
+  { word: 'papillon', syllables: ['pa','pi','llon'], emoji: '🦋' },
+  { word: 'chocolat', syllables: ['cho','co','lat'], emoji: '🍫' },
+  { word: 'tomate', syllables: ['to','ma','te'], emoji: '🍅' },
+  { word: 'banane', syllables: ['ba','na','ne'], emoji: '🍌' },
+  { word: 'robot', syllables: ['ro','bot'], emoji: '🤖' },
+  { word: 'pirate', syllables: ['pi','ra','te'], emoji: '🏴‍☠️' },
+  { word: 'lune', syllables: ['lu','ne'], emoji: '🌙' },
+  { word: 'étoile', syllables: ['é','toi','le'], emoji: '⭐' },
+  { word: 'cadeau', syllables: ['ca','deau'], emoji: '🎁' },
+  { word: 'gâteau', syllables: ['gâ','teau'], emoji: '🎂' },
+  { word: 'mouton', syllables: ['mou','ton'], emoji: '🐑' },
+  { word: 'oiseau', syllables: ['oi','seau'], emoji: '🐦' },
+  { word: 'cheval', syllables: ['che','val'], emoji: '🐴' },
+  { word: 'canard', syllables: ['ca','nard'], emoji: '🦆' }
+];
+var cpSyllabesState = { words: [], current: 0, errors: 0, built: [], currentWord: null };
+
+function cpSyllabesStart() {
+  var picked = cpShuffle(cpSyllabesData).slice(0, 8);
+  cpSyllabesState.words = picked;
+  cpSyllabesState.current = 0;
+  cpSyllabesState.errors = 0;
+  showScreen('cpSyllabesGameScreen');
+  cpSyllabesShowWord();
+}
+
+function cpSyllabesShowWord() {
+  var s = cpSyllabesState;
+  if (s.current >= s.words.length) {
+    var stars = s.errors <= 2 ? 3 : s.errors <= 4 ? 2 : 1;
+    cpSaveBestStars('cpSyllabesBest', stars);
+    var score = Math.max(0, (s.words.length - s.errors)) * 10;
+    lastGameStartFn = function() { cpSyllabesStart(); };
+    showEndScreen(score, stars, s.errors <= 2 ? 'Excellent ! Tu sais construire les mots ! 🎉' : s.errors <= 4 ? 'Bien joué ! 😊' : 'Continue à t\'entraîner ! 💪');
+    return;
+  }
+  s.currentWord = s.words[s.current];
+  s.built = [];
+  document.getElementById('cpSyllabesProgress').textContent = 'Mot ' + (s.current + 1) + ' / ' + s.words.length;
+  document.getElementById('cpSyllabesEmoji').textContent = s.currentWord.emoji;
+  document.getElementById('cpSyllabesBuilt').textContent = '';
+  document.getElementById('cpSyllabesFeedback').textContent = '';
+
+  var scrambled = cpShuffle(s.currentWord.syllables.slice());
+  var container = document.getElementById('cpSyllabesTiles');
+  container.innerHTML = '';
+  scrambled.forEach(function(syl) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.4rem;padding:12px 22px;border-radius:14px;font-family:"Fredoka One",cursive;';
+    btn.textContent = syl;
+    btn.onclick = function() { cpSyllabesTap(syl, btn); };
+    container.appendChild(btn);
+  });
+
+  setTimeout(function() { cpSyllabesSpeakWord(); }, 400);
+}
+
+function cpSyllabesSpeakWord() {
+  if (cpSyllabesState.currentWord) {
+    cpSpeak(cpSyllabesState.currentWord.word, 0.8);
+  }
+}
+
+function cpSyllabesTap(syl, btn) {
+  var s = cpSyllabesState;
+  var expected = s.currentWord.syllables[s.built.length];
+  var fb = document.getElementById('cpSyllabesFeedback');
+
+  if (syl === expected) {
+    s.built.push(syl);
+    btn.disabled = true;
+    btn.style.opacity = '0.3';
+    document.getElementById('cpSyllabesBuilt').textContent = s.built.join('-');
+
+    if (s.built.length === s.currentWord.syllables.length) {
+      fb.textContent = '🎉 ' + s.currentWord.word + ' !';
+      fb.style.color = '#06D6A0';
+      cpSpeak(s.currentWord.word, 0.9);
+      s.current++;
+      setTimeout(function() { cpSyllabesShowWord(); }, 1500);
+    }
+  } else {
+    s.errors++;
+    fb.textContent = '❌ Essaie encore !';
+    fb.style.color = '#FF6B9D';
+    setTimeout(function() { fb.textContent = ''; }, 800);
+  }
+}
+
+// ============================================
+// CP LECTURE: LIRE DES MOTS
+// ============================================
+var cpLireMotsData = {
+  1: [
+    ['chat','maison','vélo'],['livre','arbre','soleil'],['chien','fleur','table'],
+    ['lune','porte','rouge'],['papa','école','jardin'],['eau','fille','bleu'],
+    ['bébé','nuage','pont'],['main','poule','vert'],['jeu','neige','dent'],
+    ['roi','plage','lait'],['bus','robe','four'],['sac','cage','riz'],
+    ['nid','bras','soupe']
+  ],
+  2: [
+    ['bateau','gâteau','chapeau'],['pomme','gomme','homme'],['lapin','sapin','matin'],
+    ['mouton','bouton','carton'],['maison','raison','saison'],['poisson','boisson','buisson'],
+    ['cheval','canal','journal'],['tomate','pirate','camarade'],['banane','cabane','semaine'],
+    ['voiture','iture','ceinture'],['cadeau','rideau','manteau'],['oiseau','ciseau','museau'],
+    ['poulet','boulet','jouet']
+  ],
+  3: [
+    ['pain','pin','pont'],['vent','vont','van'],['bon','ban','ben'],
+    ['main','mon','min'],['par','pour','peur'],['mer','mur','mort'],
+    ['soir','sur','sourd'],['bain','bon','brun'],['lait','lit','loup'],
+    ['feu','fou','fin'],['cher','char','chou'],['dos','doux','dur'],
+    ['nez','nu','nous']
+  ]
+};
+var cpLireMotsState = { level: 1, questions: [], current: 0, score: 0 };
+
+function cpLireMotsStart() {
+  cpLireMotsState.level = 1;
+  showScreen('cpLireMotsGameScreen');
+  cpLireMotsSetLevel(1);
+}
+
+function cpLireMotsSetLevel(lv) {
+  cpLireMotsState.level = lv;
+  for (var i = 1; i <= 3; i++) {
+    var btn = document.getElementById('cpLireMotsLvl' + i);
+    if (btn) btn.className = (i === lv) ? 'btn btn-sm' : 'btn btn-sm btn-outline';
+  }
+  cpLireMotsNewRound();
+}
+
+function cpLireMotsNewRound() {
+  var pool = cpLireMotsData[cpLireMotsState.level];
+  var shuffled = cpShuffle(pool);
+  var questions = [];
+  for (var i = 0; i < 10; i++) {
+    var group = shuffled[i % shuffled.length];
+    var correctIdx = Math.floor(Math.random() * group.length);
+    questions.push({ words: cpShuffle(group.slice()), correct: group[correctIdx] });
+  }
+  cpLireMotsState.questions = questions;
+  cpLireMotsState.current = 0;
+  cpLireMotsState.score = 0;
+  cpLireMotsShowQuestion();
+}
+
+function cpLireMotsShowQuestion() {
+  var s = cpLireMotsState;
+  if (s.current >= 10) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpLireMotsBest', stars);
+    lastGameStartFn = function() { cpLireMotsNewRound(); showScreen('cpLireMotsGameScreen'); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Super ! Tu lis très bien ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue à t\'entraîner ! 💪');
+    return;
+  }
+  var q = s.questions[s.current];
+  document.getElementById('cpLireMotsProgress').textContent = 'Question ' + (s.current + 1) + ' / 10';
+  document.getElementById('cpLireMotsFeedback').textContent = '';
+
+  var container = document.getElementById('cpLireMotsChoices');
+  container.innerHTML = '';
+  q.words.forEach(function(w) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.4rem;padding:14px 30px;border-radius:14px;font-family:"Fredoka One",cursive;width:100%;';
+    btn.textContent = w;
+    btn.onclick = function() { cpLireMotsAnswer(w, q.correct); };
+    container.appendChild(btn);
+  });
+
+  setTimeout(function() { cpLireMotsSpeakCurrent(); }, 500);
+}
+
+function cpLireMotsSpeakCurrent() {
+  var s = cpLireMotsState;
+  if (s.current < s.questions.length) {
+    cpSpeak(s.questions[s.current].correct, 0.8);
+  }
+}
+
+function cpLireMotsAnswer(picked, correct) {
+  var fb = document.getElementById('cpLireMotsFeedback');
+  if (picked === correct) {
+    cpLireMotsState.score++;
+    fb.textContent = '✅ Bravo ! 🌟';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'était « ' + correct + ' »';
+    fb.style.color = '#FF6B9D';
+  }
+  cpLireMotsState.current++;
+  setTimeout(function() { cpLireMotsShowQuestion(); }, 1200);
+}
+
+// ============================================
+// CP MATHS: COMPTER
+// ============================================
+var cpCompterEmojis = ['🍎','🟡','⭐','🌸','🐟','🦋','🍓','🔵','🍊','💎'];
+var cpCompterState = { level: 1, current: 0, score: 0, answer: 0 };
+
+function cpCompterStart() {
+  cpCompterState.level = 1;
+  showScreen('cpCompterGameScreen');
+  cpCompterSetLevel(1);
+}
+
+function cpCompterSetLevel(lv) {
+  cpCompterState.level = lv;
+  for (var i = 1; i <= 3; i++) {
+    var btn = document.getElementById('cpCompterLvl' + i);
+    if (btn) btn.className = (i === lv) ? 'btn btn-sm' : 'btn btn-sm btn-outline';
+  }
+  cpCompterNewRound();
+}
+
+function cpCompterNewRound() {
+  cpCompterState.current = 0;
+  cpCompterState.score = 0;
+  cpCompterShowQuestion();
+}
+
+function cpCompterShowQuestion() {
+  var s = cpCompterState;
+  if (s.current >= 10) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpCompterBest', stars);
+    lastGameStartFn = function() { cpCompterNewRound(); showScreen('cpCompterGameScreen'); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Tu sais bien compter ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue ! 💪');
+    return;
+  }
+  document.getElementById('cpCompterProgress').textContent = 'Question ' + (s.current + 1) + ' / 10';
+  document.getElementById('cpCompterFeedback').textContent = '';
+
+  var min, max;
+  if (s.level === 1) { min = 1; max = 10; }
+  else if (s.level === 2) { min = 10; max = 20; }
+  else { min = 10; max = 50; }
+
+  var count = Math.floor(Math.random() * (max - min + 1)) + min;
+  s.answer = count;
+  var emoji = cpCompterEmojis[Math.floor(Math.random() * cpCompterEmojis.length)];
+
+  var objDiv = document.getElementById('cpCompterObjects');
+  if (count <= 20) {
+    objDiv.innerHTML = (emoji + ' ').repeat(count);
+  } else {
+    var rows = '';
+    var remaining = count;
+    while (remaining > 0) {
+      var rowCount = Math.min(10, remaining);
+      rows += (emoji + ' ').repeat(rowCount) + '<br>';
+      remaining -= rowCount;
+    }
+    objDiv.innerHTML = rows;
+  }
+
+  var wrongs = cpWrongNumbers(count, 3, Math.max(1, min), max);
+  var choices = cpShuffle([count].concat(wrongs));
+
+  var container = document.getElementById('cpCompterChoices');
+  container.innerHTML = '';
+  choices.forEach(function(c) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.6rem;padding:14px 24px;min-width:70px;border-radius:16px;font-family:"Fredoka One",cursive;';
+    btn.textContent = c;
+    btn.onclick = function() { cpCompterAnswer(c, count); };
+    container.appendChild(btn);
+  });
+}
+
+function cpCompterAnswer(picked, correct) {
+  var fb = document.getElementById('cpCompterFeedback');
+  if (picked === correct) {
+    cpCompterState.score++;
+    fb.textContent = '✅ Bravo ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'était ' + correct + ' !';
+    fb.style.color = '#FF6B9D';
+  }
+  cpCompterState.current++;
+  setTimeout(function() { cpCompterShowQuestion(); }, 1200);
+}
+
+// ============================================
+// CP MATHS: CALCUL
+// ============================================
+var cpCalculEmojis = ['🍎','🍊','⭐','🌸','🐟'];
+var cpCalculState = { level: 1, current: 0, score: 0, answer: 0 };
+
+function cpCalculStart() {
+  cpCalculState.level = 1;
+  showScreen('cpCalculGameScreen');
+  cpCalculSetLevel(1);
+}
+
+function cpCalculSetLevel(lv) {
+  cpCalculState.level = lv;
+  for (var i = 1; i <= 5; i++) {
+    var btn = document.getElementById('cpCalculLvl' + i);
+    if (btn) btn.className = (i === lv) ? 'btn btn-sm' : 'btn btn-sm btn-outline';
+  }
+  cpCalculNewRound();
+}
+
+function cpCalculNewRound() {
+  cpCalculState.current = 0;
+  cpCalculState.score = 0;
+  cpCalculShowQuestion();
+}
+
+function cpCalculShowQuestion() {
+  var s = cpCalculState;
+  if (s.current >= 10) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpCalculBest', stars);
+    lastGameStartFn = function() { cpCalculNewRound(); showScreen('cpCalculGameScreen'); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Tu calcules super bien ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue ! 💪');
+    return;
+  }
+  document.getElementById('cpCalculProgress').textContent = 'Question ' + (s.current + 1) + ' / 10';
+  document.getElementById('cpCalculFeedback').textContent = '';
+
+  var a, b, op, answer, maxVal;
+  if (s.level <= 2) {
+    op = '+';
+    maxVal = s.level === 1 ? 10 : 20;
+    a = Math.floor(Math.random() * (maxVal - 1)) + 1;
+    b = Math.floor(Math.random() * (maxVal - a)) + 1;
+    if (a + b > maxVal) b = maxVal - a;
+    answer = a + b;
+  } else if (s.level <= 4) {
+    op = '−';
+    maxVal = s.level === 3 ? 10 : 20;
+    a = Math.floor(Math.random() * maxVal) + 1;
+    b = Math.floor(Math.random() * a) + 1;
+    answer = a - b;
+  } else {
+    if (Math.random() < 0.5) {
+      op = '+';
+      a = Math.floor(Math.random() * 18) + 1;
+      b = Math.floor(Math.random() * (20 - a)) + 1;
+      answer = a + b;
+    } else {
+      op = '−';
+      a = Math.floor(Math.random() * 19) + 2;
+      b = Math.floor(Math.random() * a) + 1;
+      answer = a - b;
+    }
+  }
+  s.answer = answer;
+
+  var emoji = cpCalculEmojis[Math.floor(Math.random() * cpCalculEmojis.length)];
+  var visual = document.getElementById('cpCalculVisual');
+  if (a <= 20 && b <= 20) {
+    visual.innerHTML = (emoji + ' ').repeat(a) + '<span style="font-family:Fredoka One,cursive;font-size:1.5rem;color:var(--purple);margin:0 8px;">' + op + '</span>' + (emoji + ' ').repeat(b);
+  } else {
+    visual.innerHTML = '';
+  }
+
+  document.getElementById('cpCalculQuestion').textContent = a + ' ' + op + ' ' + b + ' = ?';
+
+  var wrongs = cpWrongNumbers(answer, 3, Math.max(0, answer - 5), answer + 5);
+  var choices = cpShuffle([answer].concat(wrongs));
+
+  var container = document.getElementById('cpCalculChoices');
+  container.innerHTML = '';
+  choices.forEach(function(c) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.6rem;padding:14px 24px;min-width:70px;border-radius:16px;font-family:"Fredoka One",cursive;';
+    btn.textContent = c;
+    btn.onclick = function() { cpCalculAnswer(c, answer); };
+    container.appendChild(btn);
+  });
+}
+
+function cpCalculAnswer(picked, correct) {
+  var fb = document.getElementById('cpCalculFeedback');
+  if (picked === correct) {
+    cpCalculState.score++;
+    fb.textContent = '✅ Bravo ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ La réponse était ' + correct;
+    fb.style.color = '#FF6B9D';
+  }
+  cpCalculState.current++;
+  setTimeout(function() { cpCalculShowQuestion(); }, 1200);
+}
+
+// ============================================
+// CP MATHS: COMPARER
+// ============================================
+var cpComparerState = { level: 1, current: 0, score: 0, left: 0, right: 0 };
+
+function cpComparerStart() {
+  cpComparerState.level = 1;
+  showScreen('cpComparerGameScreen');
+  cpComparerSetLevel(1);
+}
+
+function cpComparerSetLevel(lv) {
+  cpComparerState.level = lv;
+  for (var i = 1; i <= 3; i++) {
+    var btn = document.getElementById('cpComparerLvl' + i);
+    if (btn) btn.className = (i === lv) ? 'btn btn-sm' : 'btn btn-sm btn-outline';
+  }
+  cpComparerNewRound();
+}
+
+function cpComparerNewRound() {
+  cpComparerState.current = 0;
+  cpComparerState.score = 0;
+  cpComparerShowQuestion();
+}
+
+function cpComparerShowQuestion() {
+  var s = cpComparerState;
+  if (s.current >= 10) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpComparerBest', stars);
+    lastGameStartFn = function() { cpComparerNewRound(); showScreen('cpComparerGameScreen'); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Tu compares comme un champion ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue ! 💪');
+    return;
+  }
+  document.getElementById('cpComparerProgress').textContent = 'Question ' + (s.current + 1) + ' / 10';
+  document.getElementById('cpComparerFeedback').textContent = '';
+  document.getElementById('cpComparerOp').textContent = '?';
+
+  var maxVal = s.level === 1 ? 10 : s.level === 2 ? 20 : 100;
+  s.left = Math.floor(Math.random() * (maxVal + 1));
+  s.right = Math.floor(Math.random() * (maxVal + 1));
+  // 20% chance of equal
+  if (Math.random() < 0.2) s.right = s.left;
+
+  document.getElementById('cpComparerLeft').textContent = s.left;
+  document.getElementById('cpComparerRight').textContent = s.right;
+
+  var container = document.getElementById('cpComparerChoices');
+  container.innerHTML = '';
+  ['<', '=', '>'].forEach(function(op) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:2.2rem;padding:16px 28px;border-radius:50%;font-family:"Fredoka One",cursive;min-width:70px;';
+    btn.textContent = op;
+    btn.onclick = function() { cpComparerAnswer(op); };
+    container.appendChild(btn);
+  });
+}
+
+function cpComparerAnswer(op) {
+  var s = cpComparerState;
+  var correct;
+  if (s.left < s.right) correct = '<';
+  else if (s.left > s.right) correct = '>';
+  else correct = '=';
+
+  var fb = document.getElementById('cpComparerFeedback');
+  if (op === correct) {
+    s.score++;
+    fb.textContent = '✅ ' + s.left + ' ' + correct + ' ' + s.right + ' 🎉';
+    fb.style.color = '#06D6A0';
+    document.getElementById('cpComparerOp').textContent = correct;
+    document.getElementById('cpComparerOp').style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'est ' + s.left + ' ' + correct + ' ' + s.right;
+    fb.style.color = '#FF6B9D';
+    document.getElementById('cpComparerOp').textContent = correct;
+    document.getElementById('cpComparerOp').style.color = '#FF6B9D';
+  }
+  s.current++;
+  setTimeout(function() {
+    document.getElementById('cpComparerOp').style.color = '#999';
+    cpComparerShowQuestion();
+  }, 1300);
+}
+
+// ============================================
+// CP VOCABULAIRE
+// ============================================
+var cpVocabThemes = {
+  'Les animaux de la ferme': {emoji:'🐄', items:[
+    {word:'un chat',emoji:'🐱'},{word:'un chien',emoji:'🐶'},{word:'un cheval',emoji:'🐴'},{word:'une vache',emoji:'🐮'},{word:'un cochon',emoji:'🐷'},
+    {word:'une poule',emoji:'🐔'},{word:'un coq',emoji:'🐓'},{word:'un canard',emoji:'🦆'},{word:'un mouton',emoji:'🐑'},{word:'une chèvre',emoji:'🐐'},
+    {word:'un âne',emoji:'🫏'},{word:'un lapin',emoji:'🐰'},{word:'une oie',emoji:'🪿'},{word:'une dinde',emoji:'🦃'},{word:'un poussin',emoji:'🐣'},
+    {word:'un taureau',emoji:'🐂'},{word:'un agneau',emoji:'🐑'},{word:'une souris',emoji:'🐭'},{word:'un escargot',emoji:'🐌'},{word:'un ver de terre',emoji:'🪱'}
+  ]},
+  'Les animaux sauvages': {emoji:'🦁', items:[
+    {word:'un lion',emoji:'🦁'},{word:'un éléphant',emoji:'🐘'},{word:'une girafe',emoji:'🦒'},{word:'un singe',emoji:'🐒'},{word:'un tigre',emoji:'🐯'},
+    {word:'un ours',emoji:'🐻'},{word:'un loup',emoji:'🐺'},{word:'un renard',emoji:'🦊'},{word:'un cerf',emoji:'🦌'},{word:'un serpent',emoji:'🐍'},
+    {word:'un crocodile',emoji:'🐊'},{word:'un hippopotame',emoji:'🦛'},{word:'un zèbre',emoji:'🦓'},{word:'un rhinocéros',emoji:'🦏'},{word:'un aigle',emoji:'🦅'},
+    {word:'un requin',emoji:'🦈'},{word:'une baleine',emoji:'🐋'},{word:'un dauphin',emoji:'🐬'},{word:'une tortue',emoji:'🐢'},{word:'un pingouin',emoji:'🐧'}
+  ]},
+  'Les insectes et petites bêtes': {emoji:'🐛', items:[
+    {word:'un papillon',emoji:'🦋'},{word:'une abeille',emoji:'🐝'},{word:'une fourmi',emoji:'🐜'},{word:'une coccinelle',emoji:'🐞'},{word:'une mouche',emoji:'🪰'},
+    {word:'un moustique',emoji:'🦟'},{word:'une araignée',emoji:'🕷️'},{word:'une chenille',emoji:'🐛'},{word:'une libellule',emoji:'🪻'},{word:'un scarabée',emoji:'🪲'},
+    {word:'une guêpe',emoji:'🐝'},{word:'une sauterelle',emoji:'🦗'}
+  ]},
+  'Le corps humain': {emoji:'🧍', items:[
+    {word:'la tête',emoji:'😊'},{word:'les cheveux',emoji:'💇'},{word:'le front',emoji:'🤔'},{word:'les yeux',emoji:'👁️'},{word:'les oreilles',emoji:'👂'},
+    {word:'le nez',emoji:'👃'},{word:'la bouche',emoji:'👄'},{word:'les dents',emoji:'🦷'},{word:'la langue',emoji:'👅'},{word:'le menton',emoji:'😐'},
+    {word:'le cou',emoji:'🦒'},{word:'les épaules',emoji:'🤷'},{word:'le bras',emoji:'💪'},{word:'le coude',emoji:'🦾'},{word:'le poignet',emoji:'⌚'},
+    {word:'la main',emoji:'🤲'},{word:'le doigt',emoji:'☝️'},{word:'un ongle',emoji:'💅'},{word:'le ventre',emoji:'🫄'},{word:'le dos',emoji:'🔙'},
+    {word:'la jambe',emoji:'🦵'},{word:'le genou',emoji:'🦿'},{word:'la cheville',emoji:'🦶'},{word:'le pied',emoji:'👣'},{word:'un orteil',emoji:'🦶'}
+  ]},
+  'Les vêtements': {emoji:'👗', items:[
+    {word:'un pantalon',emoji:'👖'},{word:'une chemise',emoji:'👔'},{word:'une robe',emoji:'👗'},{word:'une jupe',emoji:'🩱'},{word:'un pull',emoji:'🧥'},
+    {word:'un manteau',emoji:'🧥'},{word:'une veste',emoji:'🧥'},{word:'un chapeau',emoji:'👒'},{word:'un bonnet',emoji:'🧢'},{word:'une écharpe',emoji:'🧣'},
+    {word:'des gants',emoji:'🧤'},{word:'des chaussures',emoji:'👟'},{word:'des bottes',emoji:'👢'},{word:'des chaussettes',emoji:'🧦'},{word:'un short',emoji:'🩳'},
+    {word:'un pyjama',emoji:'😴'},{word:'un maillot',emoji:'🩱'},{word:'une ceinture',emoji:'👔'},{word:'des lunettes',emoji:'👓'},{word:'un sac',emoji:'👜'}
+  ]},
+  'Les fruits': {emoji:'🍎', items:[
+    {word:'une pomme',emoji:'🍎'},{word:'une poire',emoji:'🍐'},{word:'une banane',emoji:'🍌'},{word:'une orange',emoji:'🍊'},{word:'une fraise',emoji:'🍓'},
+    {word:'une cerise',emoji:'🍒'},{word:'du raisin',emoji:'🍇'},{word:'une pastèque',emoji:'🍉'},{word:'un ananas',emoji:'🍍'},{word:'un citron',emoji:'🍋'},
+    {word:'une pêche',emoji:'🍑'},{word:'un abricot',emoji:'🍑'},{word:'une framboise',emoji:'🫐'},{word:'un kiwi',emoji:'🥝'},{word:'un melon',emoji:'🍈'}
+  ]},
+  'Les légumes': {emoji:'🥕', items:[
+    {word:'une carotte',emoji:'🥕'},{word:'une tomate',emoji:'🍅'},{word:'une salade',emoji:'🥬'},{word:'une pomme de terre',emoji:'🥔'},{word:'un haricot',emoji:'🫘'},
+    {word:'un petit pois',emoji:'🟢'},{word:'une courgette',emoji:'🥒'},{word:'un concombre',emoji:'🥒'},{word:'un oignon',emoji:'🧅'},{word:'de l\'ail',emoji:'🧄'},
+    {word:'un chou',emoji:'🥬'},{word:'un poivron',emoji:'🫑'}
+  ]},
+  'Les repas': {emoji:'🍽️', items:[
+    {word:'du pain',emoji:'🍞'},{word:'du beurre',emoji:'🧈'},{word:'du fromage',emoji:'🧀'},{word:'du lait',emoji:'🥛'},{word:'un œuf',emoji:'🥚'},
+    {word:'du poulet',emoji:'🍗'},{word:'un poisson',emoji:'🐟'},{word:'du riz',emoji:'🍚'},{word:'des pâtes',emoji:'🍝'},{word:'de la soupe',emoji:'🍲'},
+    {word:'de l\'eau',emoji:'💧'},{word:'du jus',emoji:'🧃'},{word:'un gâteau',emoji:'🎂'},{word:'du chocolat',emoji:'🍫'},{word:'de la confiture',emoji:'🫙'},
+    {word:'du miel',emoji:'🍯'},{word:'un yaourt',emoji:'🥛'},{word:'une crêpe',emoji:'🥞'}
+  ]},
+  'L\'école': {emoji:'🏫', items:[
+    {word:'un livre',emoji:'📚'},{word:'un cahier',emoji:'📓'},{word:'un crayon',emoji:'✏️'},{word:'un stylo',emoji:'🖊️'},{word:'une gomme',emoji:'🧽'},
+    {word:'une règle',emoji:'📏'},{word:'des ciseaux',emoji:'✂️'},{word:'de la colle',emoji:'🧴'},{word:'un cartable',emoji:'🎒'},{word:'une trousse',emoji:'✏️'},
+    {word:'le tableau',emoji:'📋'},{word:'une craie',emoji:'🖍️'},{word:'le bureau',emoji:'🪑'},{word:'une chaise',emoji:'💺'},{word:'la classe',emoji:'🏫'},
+    {word:'la cour',emoji:'🏟️'},{word:'la maîtresse',emoji:'👩‍🏫'},{word:'un camarade',emoji:'👦'},{word:'la récréation',emoji:'⏰'},{word:'la cantine',emoji:'🍽️'}
+  ]},
+  'La maison - pièces': {emoji:'🏠', items:[
+    {word:'la maison',emoji:'🏠'},{word:'la cuisine',emoji:'🍳'},{word:'le salon',emoji:'🛋️'},{word:'la chambre',emoji:'🛏️'},{word:'la salle de bains',emoji:'🛁'},
+    {word:'les toilettes',emoji:'🚽'},{word:'le garage',emoji:'🚗'},{word:'le jardin',emoji:'🌿'},{word:'un escalier',emoji:'🪜'},{word:'le grenier',emoji:'🏚️'},
+    {word:'la cave',emoji:'🪨'},{word:'le balcon',emoji:'🏗️'}
+  ]},
+  'La maison - objets': {emoji:'🪑', items:[
+    {word:'une table',emoji:'🪑'},{word:'un lit',emoji:'🛏️'},{word:'une armoire',emoji:'🗄️'},{word:'une lampe',emoji:'💡'},{word:'une télévision',emoji:'📺'},
+    {word:'un téléphone',emoji:'📱'},{word:'un ordinateur',emoji:'💻'},{word:'un réfrigérateur',emoji:'🧊'},{word:'un four',emoji:'🔥'},{word:'une assiette',emoji:'🍽️'},
+    {word:'un verre',emoji:'🥛'},{word:'un couteau',emoji:'🔪'},{word:'une fourchette',emoji:'🍴'},{word:'une cuillère',emoji:'🥄'},{word:'une serviette',emoji:'🧻'},
+    {word:'du savon',emoji:'🧼'},{word:'une brosse à dents',emoji:'🪥'},{word:'un miroir',emoji:'🪞'},{word:'une horloge',emoji:'🕰️'},{word:'un canapé',emoji:'🛋️'}
+  ]},
+  'Les couleurs': {emoji:'🎨', items:[
+    {word:'rouge',emoji:'🔴'},{word:'bleu',emoji:'🔵'},{word:'vert',emoji:'🟢'},{word:'jaune',emoji:'🟡'},{word:'orange',emoji:'🟠'},
+    {word:'violet',emoji:'🟣'},{word:'rose',emoji:'🩷'},{word:'noir',emoji:'⚫'},{word:'blanc',emoji:'⚪'},{word:'marron',emoji:'🟤'},
+    {word:'gris',emoji:'🩶'},{word:'doré',emoji:'✨'}
+  ]},
+  'La famille': {emoji:'👨‍👩‍👧‍👦', items:[
+    {word:'papa',emoji:'👨'},{word:'maman',emoji:'👩'},{word:'le frère',emoji:'👦'},{word:'la sœur',emoji:'👧'},{word:'le bébé',emoji:'👶'},
+    {word:'papi',emoji:'👴'},{word:'mamie',emoji:'👵'},{word:'un oncle',emoji:'👨‍🦱'},{word:'une tante',emoji:'👩‍🦱'},{word:'un cousin',emoji:'👦'},
+    {word:'une cousine',emoji:'👧'},{word:'le fils',emoji:'👦'},{word:'la fille',emoji:'👧'},{word:'le mari',emoji:'🤵'},{word:'la femme',emoji:'👰'}
+  ]},
+  'Les transports': {emoji:'🚗', items:[
+    {word:'une voiture',emoji:'🚗'},{word:'un bus',emoji:'🚌'},{word:'un train',emoji:'🚆'},{word:'un avion',emoji:'✈️'},{word:'un vélo',emoji:'🚲'},
+    {word:'une moto',emoji:'🏍️'},{word:'un bateau',emoji:'⛵'},{word:'un camion',emoji:'🚚'},{word:'un hélicoptère',emoji:'🚁'},{word:'une fusée',emoji:'🚀'},
+    {word:'une trottinette',emoji:'🛴'},{word:'une ambulance',emoji:'🚑'},{word:'un taxi',emoji:'🚕'},{word:'le métro',emoji:'🚇'},{word:'un tramway',emoji:'🚃'}
+  ]},
+  'Les métiers': {emoji:'👷', items:[
+    {word:'un docteur',emoji:'🩺'},{word:'un pompier',emoji:'🚒'},{word:'un boulanger',emoji:'🥖'},{word:'un boucher',emoji:'🥩'},{word:'un policier',emoji:'👮'},
+    {word:'un facteur',emoji:'📮'},{word:'un cuisinier',emoji:'👨‍🍳'},{word:'un jardinier',emoji:'👨‍🌾'},{word:'un coiffeur',emoji:'💇'},{word:'un dentiste',emoji:'🦷'},
+    {word:'un infirmier',emoji:'👨‍⚕️'},{word:'un pilote',emoji:'👨‍✈️'},{word:'un fermier',emoji:'🧑‍🌾'},{word:'un musicien',emoji:'🎵'},{word:'un peintre',emoji:'🎨'},
+    {word:'un vétérinaire',emoji:'🐾'},{word:'un plombier',emoji:'🔧'},{word:'un architecte',emoji:'📐'}
+  ]},
+  'La nature': {emoji:'🌿', items:[
+    {word:'un arbre',emoji:'🌳'},{word:'une fleur',emoji:'🌸'},{word:'l\'herbe',emoji:'🌱'},{word:'une feuille',emoji:'🍃'},{word:'une branche',emoji:'🪵'},
+    {word:'une racine',emoji:'🌿'},{word:'la forêt',emoji:'🌲'},{word:'une montagne',emoji:'⛰️'},{word:'une rivière',emoji:'🏞️'},{word:'la mer',emoji:'🌊'},
+    {word:'un lac',emoji:'💧'},{word:'la plage',emoji:'🏖️'},{word:'le soleil',emoji:'☀️'},{word:'la lune',emoji:'🌙'},{word:'une étoile',emoji:'⭐'},
+    {word:'un nuage',emoji:'☁️'},{word:'la pluie',emoji:'🌧️'},{word:'la neige',emoji:'❄️'}
+  ]},
+  'Le temps et météo': {emoji:'🌤️', items:[
+    {word:'le vent',emoji:'💨'},{word:'un orage',emoji:'⛈️'},{word:'un arc-en-ciel',emoji:'🌈'},{word:'le brouillard',emoji:'🌫️'},{word:'une tempête',emoji:'🌪️'},
+    {word:'la grêle',emoji:'🧊'},{word:'chaud',emoji:'🥵'},{word:'froid',emoji:'🥶'},
+    {word:'ensoleillé',emoji:'☀️'},{word:'pluvieux',emoji:'🌧️'},{word:'nuageux',emoji:'☁️'},{word:'venteux',emoji:'🍃'}
+  ]},
+  'Les jours, mois, saisons': {emoji:'📅', items:[
+    {word:'lundi',emoji:'1️⃣'},{word:'mardi',emoji:'2️⃣'},{word:'mercredi',emoji:'3️⃣'},{word:'jeudi',emoji:'4️⃣'},{word:'vendredi',emoji:'5️⃣'},
+    {word:'samedi',emoji:'6️⃣'},{word:'dimanche',emoji:'7️⃣'},{word:'janvier',emoji:'❄️'},{word:'février',emoji:'💕'},{word:'mars',emoji:'🌱'},
+    {word:'avril',emoji:'🌷'},{word:'mai',emoji:'🌼'},{word:'juin',emoji:'☀️'},{word:'juillet',emoji:'🏖️'},{word:'août',emoji:'🌻'},
+    {word:'septembre',emoji:'🍂'},{word:'octobre',emoji:'🎃'},{word:'novembre',emoji:'🍁'},{word:'décembre',emoji:'🎄'},{word:'le printemps',emoji:'🌸'},
+    {word:'l\'été',emoji:'☀️'},{word:'l\'automne',emoji:'🍂'},{word:'l\'hiver',emoji:'⛄'},{word:'hier',emoji:'⬅️'},{word:'demain',emoji:'➡️'}
+  ]},
+  'Les formes': {emoji:'🔷', items:[
+    {word:'un cercle',emoji:'⭕'},{word:'un carré',emoji:'🟦'},{word:'un triangle',emoji:'🔺'},{word:'un rectangle',emoji:'🟩'},{word:'une croix',emoji:'✖️'},
+    {word:'un cœur',emoji:'❤️'},{word:'un losange',emoji:'🔷'},{word:'un ovale',emoji:'🥚'}
+  ]},
+  'Les positions': {emoji:'📍', items:[
+    {word:'sur',emoji:'⬆️'},{word:'sous',emoji:'⬇️'},{word:'devant',emoji:'🔜'},{word:'derrière',emoji:'🔙'},{word:'à côté',emoji:'↔️'},
+    {word:'entre',emoji:'↕️'},{word:'dans',emoji:'📦'},{word:'dehors',emoji:'🚪'},{word:'en haut',emoji:'⬆️'},{word:'en bas',emoji:'⬇️'},
+    {word:'à gauche',emoji:'⬅️'},{word:'à droite',emoji:'➡️'}
+  ]},
+  'Les émotions': {emoji:'😊', items:[
+    {word:'content',emoji:'😊'},{word:'triste',emoji:'😢'},{word:'en colère',emoji:'😠'},{word:'surpris',emoji:'😲'},{word:'fatigué',emoji:'😴'},
+    {word:'effrayé',emoji:'😨'},{word:'amoureux',emoji:'😍'},{word:'fier',emoji:'😤'},{word:'timide',emoji:'🫣'},{word:'jaloux',emoji:'😒'},
+    {word:'inquiet',emoji:'😟'},{word:'excité',emoji:'🤩'}
+  ]},
+  'Les actions': {emoji:'🏃', items:[
+    {word:'manger',emoji:'🍽️'},{word:'boire',emoji:'🥤'},{word:'dormir',emoji:'😴'},{word:'courir',emoji:'🏃'},{word:'marcher',emoji:'🚶'},
+    {word:'sauter',emoji:'🦘'},{word:'nager',emoji:'🏊'},{word:'lire',emoji:'📖'},{word:'écrire',emoji:'✍️'},{word:'dessiner',emoji:'🎨'},
+    {word:'chanter',emoji:'🎤'},{word:'danser',emoji:'💃'},{word:'jouer',emoji:'🎮'},{word:'rire',emoji:'😂'},{word:'pleurer',emoji:'😭'},
+    {word:'parler',emoji:'🗣️'},{word:'écouter',emoji:'👂'},{word:'regarder',emoji:'👀'},{word:'toucher',emoji:'🤚'},{word:'sentir',emoji:'👃'},
+    {word:'ouvrir',emoji:'📂'},{word:'fermer',emoji:'📁'},{word:'monter',emoji:'⬆️'},{word:'descendre',emoji:'⬇️'},{word:'tomber',emoji:'🤸'}
+  ]},
+  'La politesse': {emoji:'🤝', items:[
+    {word:'bonjour',emoji:'👋'},{word:'bonsoir',emoji:'🌙'},{word:'au revoir',emoji:'👋'},{word:'merci',emoji:'🙏'},{word:'s\'il vous plaît',emoji:'🤲'},
+    {word:'pardon',emoji:'🙇'},{word:'excuse-moi',emoji:'🙏'},{word:'bonne nuit',emoji:'🌙'}
+  ]},
+  'Les nombres en lettres': {emoji:'🔢', items:[
+    {word:'un',emoji:'1️⃣'},{word:'deux',emoji:'2️⃣'},{word:'trois',emoji:'3️⃣'},{word:'quatre',emoji:'4️⃣'},{word:'cinq',emoji:'5️⃣'},
+    {word:'six',emoji:'6️⃣'},{word:'sept',emoji:'7️⃣'},{word:'huit',emoji:'8️⃣'},{word:'neuf',emoji:'9️⃣'},{word:'dix',emoji:'🔟'},
+    {word:'onze',emoji:'1️⃣'},{word:'douze',emoji:'2️⃣'},{word:'treize',emoji:'3️⃣'},{word:'quatorze',emoji:'4️⃣'},{word:'quinze',emoji:'5️⃣'},
+    {word:'seize',emoji:'6️⃣'},{word:'vingt',emoji:'🔢'},{word:'trente',emoji:'🔢'},{word:'cinquante',emoji:'🔢'},{word:'cent',emoji:'💯'}
+  ]},
+  'Les jouets et loisirs': {emoji:'🧸', items:[
+    {word:'un ballon',emoji:'⚽'},{word:'une poupée',emoji:'🧸'},{word:'un puzzle',emoji:'🧩'},{word:'un dessin',emoji:'🖼️'},{word:'la peinture',emoji:'🎨'},
+    {word:'la musique',emoji:'🎵'},{word:'la danse',emoji:'💃'},{word:'un toboggan',emoji:'🛝'},{word:'une balançoire',emoji:'🎠'},{word:'une marionnette',emoji:'🤡'},
+    {word:'une peluche',emoji:'🧸'},{word:'un cerf-volant',emoji:'🪁'}
+  ]}
+};
+var cpVocabCurrentTheme = null;
+var cpVocabCardIdx = 0;
+
+function cpVocabRenderThemes() {
+  var container = document.getElementById('cpVocabThemes');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.keys(cpVocabThemes).forEach(function(name) {
+    var theme = cpVocabThemes[name];
+    var div = document.createElement('div');
+    div.style.cssText = 'background:linear-gradient(135deg,#fff,#f8f4ff);border-radius:16px;padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 3px 12px rgba(155,93,229,0.10);border:2px solid #e0d4f0;transition:all 0.2s;';
+    div.innerHTML = '<span style="font-size:2rem;">' + theme.emoji + '</span><div style="flex:1;"><div style="font-family:Fredoka One,cursive;font-size:1.1rem;color:var(--purple);">' + name + '</div><div style="font-size:0.8rem;color:#999;font-weight:600;">' + theme.items.length + ' mots</div></div><span style="font-size:1.4rem;">▶️</span>';
+    div.onclick = function() { cpVocabSelectTheme(name); };
+    container.appendChild(div);
+  });
+}
+
+function cpVocabSelectTheme(name) {
+  cpVocabCurrentTheme = name;
+  document.getElementById('cpVocabThemeTitle').textContent = cpVocabThemes[name].emoji + ' ' + name;
+  showScreen('cpVocabThemeScreen');
+}
+
+// --- Apprendre mode (flashcards) ---
+function cpVocabModeApprendre() {
+  cpVocabCardIdx = 0;
+  var items = cpVocabThemes[cpVocabCurrentTheme].items;
+  document.getElementById('cpVocabApprendreTitle').textContent = '📚 ' + cpVocabCurrentTheme;
+  showScreen('cpVocabApprendreScreen');
+  cpVocabShowCard(items);
+}
+
+function cpVocabShowCard(items) {
+  if (!items) items = cpVocabThemes[cpVocabCurrentTheme].items;
+  var item = items[cpVocabCardIdx];
+  document.getElementById('cpVocabCardEmoji').textContent = item.emoji;
+  document.getElementById('cpVocabCardWord').textContent = item.word;
+  document.getElementById('cpVocabCardNum').textContent = (cpVocabCardIdx + 1) + ' / ' + items.length;
+  cpSpeak(item.word, 0.85);
+}
+
+function cpVocabCardSpeak() {
+  var items = cpVocabThemes[cpVocabCurrentTheme].items;
+  cpSpeak(items[cpVocabCardIdx].word, 0.85);
+}
+
+function cpVocabCardPrev() {
+  var items = cpVocabThemes[cpVocabCurrentTheme].items;
+  cpVocabCardIdx = (cpVocabCardIdx - 1 + items.length) % items.length;
+  cpVocabShowCard(items);
+}
+
+function cpVocabCardNext() {
+  var items = cpVocabThemes[cpVocabCurrentTheme].items;
+  cpVocabCardIdx = (cpVocabCardIdx + 1) % items.length;
+  cpVocabShowCard(items);
+}
+
+// --- Quiz mode (emoji → pick word) ---
+var cpVocabQuizState = { items: [], current: 0, score: 0 };
+
+function cpVocabModeQuiz() {
+  var items = cpShuffle(cpVocabThemes[cpVocabCurrentTheme].items.slice());
+  cpVocabQuizState.items = items.slice(0, Math.min(10, items.length));
+  cpVocabQuizState.current = 0;
+  cpVocabQuizState.score = 0;
+  showScreen('cpVocabQuizScreen');
+  cpVocabQuizShow();
+}
+
+function cpVocabQuizShow() {
+  var s = cpVocabQuizState;
+  if (s.current >= s.items.length) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpVocab_' + cpVocabCurrentTheme + '_best', stars);
+    lastGameStartFn = function() { cpVocabModeQuiz(); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Tu connais bien le vocabulaire ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue à apprendre ! 💪');
+    return;
+  }
+  document.getElementById('cpVocabQuizProgress').textContent = 'Question ' + (s.current + 1) + ' / ' + s.items.length;
+  document.getElementById('cpVocabQuizFeedback').textContent = '';
+
+  var correct = s.items[s.current];
+  document.getElementById('cpVocabQuizEmoji').textContent = correct.emoji;
+
+  var allItems = cpVocabThemes[cpVocabCurrentTheme].items;
+  var wrongItems = cpShuffle(allItems.filter(function(it) { return it.word !== correct.word; })).slice(0, 2);
+  var choices = cpShuffle([correct].concat(wrongItems));
+
+  var container = document.getElementById('cpVocabQuizChoices');
+  container.innerHTML = '';
+  choices.forEach(function(ch) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:1.2rem;padding:12px 24px;border-radius:14px;width:100%;font-weight:700;';
+    btn.textContent = ch.word;
+    btn.onclick = function() { cpVocabQuizAnswer(ch.word, correct.word); };
+    container.appendChild(btn);
+  });
+}
+
+function cpVocabQuizAnswer(picked, correct) {
+  var fb = document.getElementById('cpVocabQuizFeedback');
+  if (picked === correct) {
+    cpVocabQuizState.score++;
+    fb.textContent = '✅ ' + correct + ' ! 🎉';
+    fb.style.color = '#06D6A0';
+    cpSpeak(correct, 0.85);
+  } else {
+    fb.textContent = '❌ C\'est « ' + correct + ' »';
+    fb.style.color = '#FF6B9D';
+    cpSpeak(correct, 0.85);
+  }
+  cpVocabQuizState.current++;
+  setTimeout(function() { cpVocabQuizShow(); }, 1300);
+}
+
+// --- Ecouter mode (hear word → pick emoji) ---
+var cpVocabEcouterState = { items: [], current: 0, score: 0 };
+
+function cpVocabModeEcouter() {
+  var items = cpShuffle(cpVocabThemes[cpVocabCurrentTheme].items.slice());
+  cpVocabEcouterState.items = items.slice(0, Math.min(10, items.length));
+  cpVocabEcouterState.current = 0;
+  cpVocabEcouterState.score = 0;
+  showScreen('cpVocabEcouterScreen');
+  cpVocabEcouterShow();
+}
+
+function cpVocabEcouterShow() {
+  var s = cpVocabEcouterState;
+  if (s.current >= s.items.length) {
+    var stars = s.score >= 8 ? 3 : s.score >= 6 ? 2 : 1;
+    cpSaveBestStars('cpVocab_' + cpVocabCurrentTheme + '_ecouter_best', stars);
+    lastGameStartFn = function() { cpVocabModeEcouter(); };
+    showEndScreen(s.score * 10, stars, s.score >= 8 ? 'Quelle oreille ! 🎉' : s.score >= 6 ? 'Bien joué ! 😊' : 'Continue à écouter ! 💪');
+    return;
+  }
+  document.getElementById('cpVocabEcouterProgress').textContent = 'Question ' + (s.current + 1) + ' / ' + s.items.length;
+  document.getElementById('cpVocabEcouterFeedback').textContent = '';
+
+  var correct = s.items[s.current];
+  var allItems = cpVocabThemes[cpVocabCurrentTheme].items;
+  var wrongItems = cpShuffle(allItems.filter(function(it) { return it.word !== correct.word; })).slice(0, 3);
+  var choices = cpShuffle([correct].concat(wrongItems));
+
+  var container = document.getElementById('cpVocabEcouterChoices');
+  container.innerHTML = '';
+  choices.forEach(function(ch) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'font-size:3rem;padding:16px 22px;border-radius:16px;min-width:80px;';
+    btn.textContent = ch.emoji;
+    btn.onclick = function() { cpVocabEcouterAnswer(ch.word, correct.word, ch.emoji); };
+    container.appendChild(btn);
+  });
+
+  setTimeout(function() { cpVocabEcouterSpeak(); }, 500);
+}
+
+function cpVocabEcouterSpeak() {
+  var s = cpVocabEcouterState;
+  if (s.current < s.items.length) {
+    cpSpeak(s.items[s.current].word, 0.8);
+  }
+}
+
+function cpVocabEcouterAnswer(picked, correct, pickedEmoji) {
+  var fb = document.getElementById('cpVocabEcouterFeedback');
+  if (picked === correct) {
+    cpVocabEcouterState.score++;
+    fb.textContent = '✅ ' + pickedEmoji + ' = ' + correct + ' ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'était « ' + correct + ' »';
+    fb.style.color = '#FF6B9D';
+  }
+  cpVocabEcouterState.current++;
+  setTimeout(function() { cpVocabEcouterShow(); }, 1300);
+}
+
+// ============================================
+// CP DECOUVERTE: LES JOURS DE LA SEMAINE
+// ============================================
+var cpJoursListe = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+var cpJoursEmojis = ['🌙','🔥','💧','⚡','💚','🪐','☀️'];
+
+function cpJoursStart() {
+  showScreen('cpJoursGameScreen');
+  cpJoursApprendre();
+}
+
+function cpJoursApprendre() {
+  var content = document.getElementById('cpJoursContent');
+  document.getElementById('cpJoursFeedback').textContent = '';
+  var html = '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;">';
+  cpJoursListe.forEach(function(jour, i) {
+    html += '<div onclick="cpSpeak(\'' + jour + '\',0.85)" style="background:linear-gradient(135deg,#fff,#f0f0ff);border-radius:14px;padding:12px 24px;cursor:pointer;display:flex;align-items:center;gap:12px;width:90%;max-width:300px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
+    html += '<span style="font-size:1.8rem;">' + cpJoursEmojis[i] + '</span>';
+    html += '<span style="font-family:Fredoka One,cursive;font-size:1.2rem;color:var(--purple);">' + jour.charAt(0).toUpperCase() + jour.slice(1) + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function cpJoursQuiz() {
+  var content = document.getElementById('cpJoursContent');
+  document.getElementById('cpJoursFeedback').textContent = '';
+  cpJoursQuizState = { current: 0, score: 0, questions: [] };
+
+  for (var i = 0; i < 7; i++) {
+    var afterIdx = (i + 1) % 7;
+    var correct = cpJoursListe[afterIdx];
+    var wrongs = cpShuffle(cpJoursListe.filter(function(j) { return j !== correct; })).slice(0, 2);
+    cpJoursQuizState.questions.push({
+      prompt: 'Quel jour vient après ' + cpJoursListe[i].charAt(0).toUpperCase() + cpJoursListe[i].slice(1) + ' ?',
+      correct: correct,
+      choices: cpShuffle([correct].concat(wrongs))
+    });
+  }
+  cpJoursQuizState.questions = cpShuffle(cpJoursQuizState.questions);
+  cpJoursQuizShowQ();
+}
+
+var cpJoursQuizState = { current: 0, score: 0, questions: [] };
+
+function cpJoursQuizShowQ() {
+  var s = cpJoursQuizState;
+  var fb = document.getElementById('cpJoursFeedback');
+  fb.textContent = '';
+  if (s.current >= s.questions.length) {
+    var stars = s.score >= 6 ? 3 : s.score >= 4 ? 2 : 1;
+    cpSaveBestStars('cpJoursBest', stars);
+    lastGameStartFn = function() { cpJoursQuiz(); showScreen('cpJoursGameScreen'); };
+    showEndScreen(Math.round(s.score / s.questions.length * 100), stars, s.score >= 6 ? 'Tu connais bien les jours ! 🎉' : 'Continue à apprendre ! 💪');
+    return;
+  }
+  var q = s.questions[s.current];
+  var content = document.getElementById('cpJoursContent');
+  var html = '<div style="text-align:center;">';
+  html += '<div style="font-family:Fredoka One,cursive;font-size:1.2rem;color:#333;margin:15px 0;">' + q.prompt + '</div>';
+  html += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:15px;">';
+  q.choices.forEach(function(ch) {
+    html += '<button class="btn btn-outline" onclick="cpJoursQuizAnswer(\'' + ch + '\',\'' + q.correct + '\')" style="font-size:1.2rem;padding:12px 28px;border-radius:14px;width:80%;max-width:280px;font-weight:700;">' + ch.charAt(0).toUpperCase() + ch.slice(1) + '</button>';
+  });
+  html += '</div></div>';
+  content.innerHTML = html;
+  cpSpeak(q.prompt, 0.85);
+}
+
+function cpJoursQuizAnswer(picked, correct) {
+  var fb = document.getElementById('cpJoursFeedback');
+  if (picked === correct) {
+    cpJoursQuizState.score++;
+    fb.textContent = '✅ ' + correct.charAt(0).toUpperCase() + correct.slice(1) + ' ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'est ' + correct.charAt(0).toUpperCase() + correct.slice(1);
+    fb.style.color = '#FF6B9D';
+  }
+  cpJoursQuizState.current++;
+  setTimeout(function() { cpJoursQuizShowQ(); }, 1300);
+}
+
+function cpJoursOrdre() {
+  var content = document.getElementById('cpJoursContent');
+  var fb = document.getElementById('cpJoursFeedback');
+  fb.textContent = '';
+  var shuffled = cpShuffle(cpJoursListe.slice());
+  var placed = [];
+
+  function render() {
+    var html = '<div style="text-align:center;">';
+    html += '<div style="font-family:Fredoka One,cursive;font-size:1.1rem;color:#333;margin-bottom:15px;">Remets les jours dans l\'ordre !</div>';
+    html += '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:15px;min-height:40px;">';
+    placed.forEach(function(j, i) {
+      html += '<span style="font-weight:700;color:var(--purple);font-size:1rem;">' + (i + 1) + '. ' + j.charAt(0).toUpperCase() + j.slice(1) + '</span>';
+    });
+    html += '</div>';
+    var remaining = shuffled.filter(function(j) { return placed.indexOf(j) === -1; });
+    html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;">';
+    remaining.forEach(function(j) {
+      html += '<button class="btn btn-outline" onclick="cpJoursOrdrePick(\'' + j + '\')" style="font-size:1rem;padding:10px 18px;border-radius:12px;font-weight:700;">' + j.charAt(0).toUpperCase() + j.slice(1) + '</button>';
+    });
+    html += '</div></div>';
+    content.innerHTML = html;
+  }
+
+  window.cpJoursOrdrePick = function(j) {
+    var expected = cpJoursListe[placed.length];
+    if (j === expected) {
+      placed.push(j);
+      if (placed.length === 7) {
+        fb.textContent = '🎉 Bravo ! C\'est parfait !';
+        fb.style.color = '#06D6A0';
+        cpSaveBestStars('cpJoursBest', 3);
+      }
+      render();
+    } else {
+      fb.textContent = '❌ Essaie encore !';
+      fb.style.color = '#FF6B9D';
+      setTimeout(function() { fb.textContent = ''; }, 800);
+    }
+  };
+
+  render();
+}
+
+// ============================================
+// CP DECOUVERTE: LES MOIS ET SAISONS
+// ============================================
+var cpMoisListe = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+var cpMoisEmojis = ['❄️','💨','🌱','🌷','🌸','☀️','🏖️','🌻','🍂','🎃','🍁','🎄'];
+var cpSaisonsData = [
+  { name: 'le printemps', emoji: '🌷', mois: ['mars','avril','mai'] },
+  { name: 'l\'été', emoji: '☀️', mois: ['juin','juillet','août'] },
+  { name: 'l\'automne', emoji: '🍂', mois: ['septembre','octobre','novembre'] },
+  { name: 'l\'hiver', emoji: '❄️', mois: ['décembre','janvier','février'] }
+];
+
+function cpMoisStart() {
+  showScreen('cpMoisGameScreen');
+  cpMoisApprendre();
+}
+
+function cpMoisApprendre() {
+  var content = document.getElementById('cpMoisContent');
+  document.getElementById('cpMoisFeedback').textContent = '';
+  var html = '<div style="text-align:center;font-family:Fredoka One,cursive;font-size:1.1rem;color:var(--purple);margin-bottom:10px;">Les 12 mois</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:20px;">';
+  cpMoisListe.forEach(function(m, i) {
+    html += '<div onclick="cpSpeak(\'' + m + '\',0.85)" style="background:linear-gradient(135deg,#fff,#f8f4ff);border-radius:12px;padding:8px 14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:6px;">';
+    html += '<span style="font-size:1.3rem;">' + cpMoisEmojis[i] + '</span>';
+    html += '<span style="font-weight:700;font-size:0.9rem;color:#333;">' + m.charAt(0).toUpperCase() + m.slice(1) + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div style="text-align:center;font-family:Fredoka One,cursive;font-size:1.1rem;color:var(--pink);margin-bottom:10px;">Les 4 saisons</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;">';
+  cpSaisonsData.forEach(function(s) {
+    html += '<div onclick="cpSpeak(\'' + s.name + '\',0.85)" style="background:linear-gradient(135deg,#fff5f9,#f0f0ff);border-radius:14px;padding:12px 18px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);min-width:120px;">';
+    html += '<div style="font-size:2rem;">' + s.emoji + '</div>';
+    html += '<div style="font-family:Fredoka One,cursive;font-size:0.95rem;color:var(--purple);">' + s.name.charAt(0).toUpperCase() + s.name.slice(1) + '</div>';
+    html += '<div style="font-size:0.75rem;color:#999;margin-top:4px;">' + s.mois.join(', ') + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function cpMoisQuizSaison() {
+  var content = document.getElementById('cpMoisContent');
+  var fb = document.getElementById('cpMoisFeedback');
+  fb.textContent = '';
+  cpMoisSaisonState = { current: 0, score: 0, questions: [] };
+
+  cpMoisListe.forEach(function(m) {
+    var correctSaison = null;
+    cpSaisonsData.forEach(function(s) {
+      if (s.mois.indexOf(m) !== -1) correctSaison = s.name;
+    });
+    cpMoisSaisonState.questions.push({ month: m, correct: correctSaison });
+  });
+  cpMoisSaisonState.questions = cpShuffle(cpMoisSaisonState.questions).slice(0, 8);
+  cpMoisSaisonShowQ();
+}
+
+var cpMoisSaisonState = { current: 0, score: 0, questions: [] };
+
+function cpMoisSaisonShowQ() {
+  var s = cpMoisSaisonState;
+  var fb = document.getElementById('cpMoisFeedback');
+  fb.textContent = '';
+  if (s.current >= s.questions.length) {
+    var stars = s.score >= 7 ? 3 : s.score >= 5 ? 2 : 1;
+    cpSaveBestStars('cpMoisBest', stars);
+    lastGameStartFn = function() { cpMoisQuizSaison(); showScreen('cpMoisGameScreen'); };
+    showEndScreen(Math.round(s.score / s.questions.length * 100), stars, s.score >= 7 ? 'Tu connais les saisons ! 🎉' : 'Continue ! 💪');
+    return;
+  }
+  var q = s.questions[s.current];
+  var content = document.getElementById('cpMoisContent');
+  var html = '<div style="text-align:center;">';
+  html += '<div style="font-family:Fredoka One,cursive;font-size:1.2rem;color:#333;margin:15px 0;">En quelle saison sommes-nous en ' + q.month.charAt(0).toUpperCase() + q.month.slice(1) + ' ?</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:15px;">';
+  cpSaisonsData.forEach(function(saison) {
+    html += '<button class="btn btn-outline" onclick="cpMoisSaisonAnswer(\'' + saison.name.replace(/'/g, "\\'") + '\',\'' + q.correct.replace(/'/g, "\\'") + '\')" style="font-size:1.1rem;padding:12px 20px;border-radius:14px;min-width:130px;font-weight:700;">' + saison.emoji + ' ' + saison.name.charAt(0).toUpperCase() + saison.name.slice(1) + '</button>';
+  });
+  html += '</div></div>';
+  content.innerHTML = html;
+  cpSpeak('En quelle saison sommes-nous en ' + q.month, 0.85);
+}
+
+function cpMoisSaisonAnswer(picked, correct) {
+  var fb = document.getElementById('cpMoisFeedback');
+  if (picked === correct) {
+    cpMoisSaisonState.score++;
+    fb.textContent = '✅ ' + correct.charAt(0).toUpperCase() + correct.slice(1) + ' ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'est ' + correct;
+    fb.style.color = '#FF6B9D';
+  }
+  cpMoisSaisonState.current++;
+  setTimeout(function() { cpMoisSaisonShowQ(); }, 1300);
+}
+
+function cpMoisQuizSuite() {
+  var content = document.getElementById('cpMoisContent');
+  var fb = document.getElementById('cpMoisFeedback');
+  fb.textContent = '';
+  cpMoisSuiteState = { current: 0, score: 0, questions: [] };
+
+  for (var i = 0; i < 12; i++) {
+    var nextIdx = (i + 1) % 12;
+    var correct = cpMoisListe[nextIdx];
+    var wrongs = cpShuffle(cpMoisListe.filter(function(m) { return m !== correct; })).slice(0, 2);
+    cpMoisSuiteState.questions.push({
+      prompt: 'Quel mois vient après ' + cpMoisListe[i].charAt(0).toUpperCase() + cpMoisListe[i].slice(1) + ' ?',
+      correct: correct,
+      choices: cpShuffle([correct].concat(wrongs))
+    });
+  }
+  cpMoisSuiteState.questions = cpShuffle(cpMoisSuiteState.questions).slice(0, 8);
+  cpMoisSuiteShowQ();
+}
+
+var cpMoisSuiteState = { current: 0, score: 0, questions: [] };
+
+function cpMoisSuiteShowQ() {
+  var s = cpMoisSuiteState;
+  var fb = document.getElementById('cpMoisFeedback');
+  fb.textContent = '';
+  if (s.current >= s.questions.length) {
+    var stars = s.score >= 7 ? 3 : s.score >= 5 ? 2 : 1;
+    cpSaveBestStars('cpMoisBest', stars);
+    lastGameStartFn = function() { cpMoisQuizSuite(); showScreen('cpMoisGameScreen'); };
+    showEndScreen(Math.round(s.score / s.questions.length * 100), stars, s.score >= 7 ? 'Tu connais bien les mois ! 🎉' : 'Continue ! 💪');
+    return;
+  }
+  var q = s.questions[s.current];
+  var content = document.getElementById('cpMoisContent');
+  var html = '<div style="text-align:center;">';
+  html += '<div style="font-family:Fredoka One,cursive;font-size:1.2rem;color:#333;margin:15px 0;">' + q.prompt + '</div>';
+  html += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:15px;">';
+  q.choices.forEach(function(ch) {
+    html += '<button class="btn btn-outline" onclick="cpMoisSuiteAnswer(\'' + ch + '\',\'' + q.correct + '\')" style="font-size:1.2rem;padding:12px 28px;border-radius:14px;width:80%;max-width:280px;font-weight:700;">' + ch.charAt(0).toUpperCase() + ch.slice(1) + '</button>';
+  });
+  html += '</div></div>';
+  content.innerHTML = html;
+  cpSpeak(q.prompt, 0.85);
+}
+
+function cpMoisSuiteAnswer(picked, correct) {
+  var fb = document.getElementById('cpMoisFeedback');
+  if (picked === correct) {
+    cpMoisSuiteState.score++;
+    fb.textContent = '✅ ' + correct.charAt(0).toUpperCase() + correct.slice(1) + ' ! 🎉';
+    fb.style.color = '#06D6A0';
+  } else {
+    fb.textContent = '❌ C\'est ' + correct.charAt(0).toUpperCase() + correct.slice(1);
+    fb.style.color = '#FF6B9D';
+  }
+  cpMoisSuiteState.current++;
+  setTimeout(function() { cpMoisSuiteShowQ(); }, 1300);
 }
 
 // === homework.js ===
@@ -17214,6 +18807,14 @@ function showScreen(screenId) {
     initDivisionOptions();
   } else if (screenId === 'conjugaisonSelectionScreen') {
     renderConjugaisonSelection();
+  } else if (screenId === 'cpLectureScreen') {
+    cpRefreshLectureStars();
+  } else if (screenId === 'cpMathsScreen') {
+    cpRefreshMathsStars();
+  } else if (screenId === 'cpDecouverteScreen') {
+    cpRefreshDecouverteStars();
+  } else if (screenId === 'cpVocabScreen') {
+    cpVocabRenderThemes();
   }
 }
 
